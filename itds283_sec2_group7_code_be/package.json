@@ -1,0 +1,12 @@
+{
+  "name": "itds283_sec2_group7_code_be",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "6787087, 6787122",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
