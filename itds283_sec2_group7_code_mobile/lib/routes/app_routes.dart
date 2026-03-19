@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import '../screens/splash_screen.dart';
-import '../screens/home_screen.dart';
+import '../screens/main_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
-  static const String home = '/home';
+  static const String main = '/main';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
       splash: (context) => const SplashScreen(),
-      home: (context) => const HomeScreen(),
+      main: (context) => const MainScreen(),
     };
   }
 }
