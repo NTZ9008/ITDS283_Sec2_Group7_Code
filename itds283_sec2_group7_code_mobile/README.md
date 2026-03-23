@@ -1,4 +1,4 @@
-# itds283_sec2_group7_code_mobile
+# itds283_sec2_group7_code_mobile.
 
 A new Flutter project.
 
