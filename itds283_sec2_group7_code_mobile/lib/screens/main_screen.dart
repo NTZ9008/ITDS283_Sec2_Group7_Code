@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:itds283_sec2_group7_code_mobile/screens/product_screen.dart';
 import 'package:remixicon/remixicon.dart';
 import 'home_screen.dart';
-
-class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Cart Page'));
-}
-
+import 'cart_screen.dart'; // ← เพิ่ม import
 
 class UserScreen extends StatelessWidget {
   const UserScreen({super.key});
@@ -29,7 +23,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const ProductScreen(),
-    const CartScreen(),
+    const CartScreen(), // ← ใช้ CartScreen จาก cart_screen.dart
     const UserScreen(),
   ];
 
@@ -38,7 +32,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: _pages[_currentIndex],
-
       bottomNavigationBar: Container(
         color: Colors.white,
         child: Column(
@@ -63,15 +56,12 @@ class _MainScreenState extends State<MainScreen> {
                 fontWeight: FontWeight.normal,
                 fontSize: 12,
               ),
-
               currentIndex: _currentIndex,
-
               onTap: (int index) {
                 setState(() {
                   _currentIndex = index;
                 });
               },
-
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Remix.home_4_line),

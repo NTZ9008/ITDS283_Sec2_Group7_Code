@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import '../routes/app_routes.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String title;
@@ -196,9 +197,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(width: 16),
           Column(
             children: [
-              _buildButton('Add To Cart', onTap: () {}),
+              _buildButton('Add To Cart', onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Added "${widget.title}" to cart'),
+                  backgroundColor: const Color(0xFF00D13B),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }),
               const SizedBox(height: 12),
-              _buildButton('Buy Now', onTap: () {}),
+              _buildButton('Buy Now', onTap: () {
+                Navigator.pushNamed(context, AppRoutes.checkout);
+              }),
             ],
           ),
         ],
@@ -259,7 +273,7 @@ class _BookPainter extends CustomPainter {
         Rect.fromLTWH(size.width - 6, size.height * 0.05, 6, size.height * 0.9),
         Paint()..color = const Color(0xFFEEEEEE));
     final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.35)
+      ..color = Colors.white.withValues(alpha: 0.35)
       ..strokeWidth = 2;
     for (int i = 1; i <= 3; i++) {
       final y = size.height * (0.25 * i);

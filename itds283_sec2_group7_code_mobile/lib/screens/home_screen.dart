@@ -90,7 +90,7 @@ class HomeScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF00D13B).withOpacity(0.1),
+              color: const Color(0xFF00D13B).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Remix.search_line, color: Colors.black),
@@ -157,14 +157,14 @@ class HomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? const Color(0xFF006B3F)
-                  : const Color(0xFF00D13B).withOpacity(0.1),
+                  : const Color(0xFF00D13B).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               icons[index],
               color: isSelected
                   ? Colors.white
-                  : const Color(0xFF00D13B).withOpacity(0.5),
+                  : const Color(0xFF00D13B).withValues(alpha: 0.5),
               size: 30,
             ),
           );
@@ -180,7 +180,7 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFF00D13B).withOpacity(0.3),
+          color: const Color(0xFF00D13B).withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(

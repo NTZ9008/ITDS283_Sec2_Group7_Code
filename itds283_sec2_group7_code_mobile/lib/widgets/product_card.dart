@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
+import '../providers/cart_provider.dart';
 
 // สีพื้นหลังหนังสือ วนซ้ำแต่ละ card
 const List<Color> _bookBgColors = [
@@ -147,14 +148,33 @@ class _ProductCardState extends State<ProductCard> {
                       child: Icon(
                         isFavorite ? Remix.heart_3_fill : Remix.heart_3_line,
                         color: isFavorite
-                            ? Colors.red.withOpacity(0.8)
+                            ? Colors.red.withValues(alpha: 0.8)
                             : Colors.grey,
                         size: 20,
                       ),
                     ),
                     const SizedBox(width: 5),
-                    const Icon(Remix.add_circle_fill,
-                        color: Color(0xFF006B3F), size: 24),
+                    GestureDetector(
+                      onTap: () {
+                        CartProviderWidget.of(context).addItem(
+                          title: widget.title,
+                          price: widget.price,
+                          imageUrl: widget.imageUrl,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added "${widget.title}" to cart'),
+                            backgroundColor: const Color(0xFF00D13B),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      child: const Icon(Remix.add_circle_fill,
+                          color: Color(0xFF006B3F), size: 24),
+                    ),
                   ],
                 ),
               ],
@@ -197,10 +217,10 @@ class _BookPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final spineW = size.width * 0.12;
     final spineColor = Color.fromARGB(
-      bookColor.alpha,
-      (bookColor.red * 0.7).toInt(),
-      (bookColor.green * 0.7).toInt(),
-      (bookColor.blue * 0.7).toInt(),
+      (bookColor.a * 255.0).round().clamp(0, 255),
+      (bookColor.r * 255.0 * 0.7).round().clamp(0, 255),
+      (bookColor.g * 255.0 * 0.7).round().clamp(0, 255),
+      (bookColor.b * 255.0 * 0.7).round().clamp(0, 255),
     );
 
     canvas.drawRect(Rect.fromLTWH(0, 0, spineW, size.height),
@@ -213,7 +233,7 @@ class _BookPainter extends CustomPainter {
         Paint()..color = const Color(0xFFEEEEEE));
 
     final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.35)
+      ..color = Colors.white.withValues(alpha: 0.35)
       ..strokeWidth = 1.5;
     for (int i = 1; i <= 3; i++) {
       final y = size.height * (0.25 * i);
