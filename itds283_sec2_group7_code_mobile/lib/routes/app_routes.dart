@@ -7,6 +7,7 @@ import '../screens/product_detail_screen.dart';
 import '../screens/checkout_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/library_screen.dart';
+import '../screens/read_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String search = '/search';
   static const String checkout = '/checkout';
   static const String lib = '/lib';
+  static const String read = '/read';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -38,6 +40,7 @@ class AppRoutes {
       checkout: (context) => const CheckoutScreen(),
       search: (context) => const SearchScreen(),
       lib: (context) => const LibraryScreen(),
+      read: (context) => const ReadScreen(),
     };
   }
 }
