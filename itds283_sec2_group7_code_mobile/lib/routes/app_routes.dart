@@ -6,6 +6,7 @@ import '../screens/signup_screen.dart';
 import '../screens/product_detail_screen.dart';
 import '../screens/checkout_screen.dart';
 import '../screens/search_screen.dart';
+import '../screens/checkout_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -14,8 +15,8 @@ class AppRoutes {
   static const String main = '/main';
   static const String onboarding = '/onboarding';
   static const String productDetail = '/product-detail';
-  static const String checkout = '/checkout';
   static const String search = '/search';
+  static const String checkout = '/checkout';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -36,6 +37,7 @@ class AppRoutes {
       },
       checkout: (context) => const CheckoutScreen(),
       search: (context) => const SearchScreen(),
+      checkout: (context) => const CheckoutScreen(),
     };
   }
 }
