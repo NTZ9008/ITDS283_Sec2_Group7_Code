@@ -4,7 +4,8 @@ import '../screens/main_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/signup_screen.dart';
 import '../screens/product_detail_screen.dart';
-import '../screens/checkout_screen.dart'; // ← เพิ่ม
+import '../screens/checkout_screen.dart';
+import '../screens/search_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -13,7 +14,8 @@ class AppRoutes {
   static const String main = '/main';
   static const String onboarding = '/onboarding';
   static const String productDetail = '/product-detail';
-  static const String checkout = '/checkout'; // ← เพิ่ม
+  static const String checkout = '/checkout';
+  static const String search = '/search';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -32,7 +34,8 @@ class AppRoutes {
           imageUrl: args['imageUrl'] ?? '',
         );
       },
-      checkout: (context) => const CheckoutScreen(), // ← เพิ่ม
+      checkout: (context) => const CheckoutScreen(),
+      search: (context) => const SearchScreen(),
     };
   }
 }

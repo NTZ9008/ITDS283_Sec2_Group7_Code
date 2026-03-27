@@ -48,7 +48,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildHeader(context),
               _buildBanner(),
               _buildSectionTitle('Categories'),
               _buildCategories(),
@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Row(
@@ -87,13 +87,16 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF00D13B).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/search'),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D13B).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Remix.search_line, color: Colors.black),
             ),
-            child: const Icon(Remix.search_line, color: Colors.black),
           ),
         ],
       ),

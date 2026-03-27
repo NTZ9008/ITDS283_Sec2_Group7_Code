@@ -2,13 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:itds283_sec2_group7_code_mobile/screens/product_screen.dart';
 import 'package:remixicon/remixicon.dart';
 import 'home_screen.dart';
-import 'cart_screen.dart'; // ← เพิ่ม import
-
-class UserScreen extends StatelessWidget {
-  const UserScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('User Page'));
-}
+import 'cart_screen.dart';
+import 'user_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
