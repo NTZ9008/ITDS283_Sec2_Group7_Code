@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../providers/library_provider.dart'; // 🛑 นำเข้า Library Provider
+import '../providers/library_provider.dart';
+import 'read_screen.dart'; // 🛑 1. นำเข้าหน้า ReadScreen
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 🛑 ดึงรายการหนังสือที่ซื้อแล้ว
     final libraryProvider = LibraryProviderWidget.of(context);
     final books = libraryProvider.items;
 
@@ -94,18 +94,27 @@ class LibraryScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: double.infinity,
-              color: const Color(0xFFB2EEF4),
-              child: Image.network(
-                book.imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.menu_book_rounded,
-                  color: Color(0xFF5B9BD5),
-                  size: 60,
+          // 🛑 2. หุ้มปกหนังสือด้วย GestureDetector เพื่อให้กดอ่านได้
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ReadScreen()),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                color: const Color(0xFFB2EEF4),
+                child: Image.network(
+                  book.imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.menu_book_rounded,
+                    color: Color(0xFF5B9BD5),
+                    size: 60,
+                  ),
                 ),
               ),
             ),
@@ -129,7 +138,6 @@ class LibraryScreen extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () {
-                // 🛑 สลับสถานะการดาวน์โหลดผ่าน Provider
                 provider.toggleDownload(index);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
