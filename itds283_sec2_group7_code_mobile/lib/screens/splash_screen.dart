@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,8 +19,17 @@ class _SplashScreenState extends State<SplashScreen> {
   _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 3));
 
+    User? firebaseUser = FirebaseAuth.instance.currentUser;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? customJwtToken = prefs.getString('jwt_token');
+
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.main);
+      if (firebaseUser != null || customJwtToken != null) {
+        Navigator.pushReplacementNamed(context, AppRoutes.main);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
     }
   }
 
