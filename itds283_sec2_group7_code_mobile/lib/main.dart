@@ -4,6 +4,7 @@ import 'routes/app_routes.dart';
 import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/favorite_provider.dart';
+import 'providers/library_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,12 +23,18 @@ class MyApp extends StatelessWidget {
         notifier: CartProvider(),
         child: FavoriteProviderWidget(
           notifier: FavoriteProvider(),
-          child: MaterialApp(
-            title: '67-E Book',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Kanit'),
-            initialRoute: AppRoutes.splash,
-            routes: AppRoutes.getRoutes(),
+          child: LibraryProviderWidget(
+            notifier: LibraryProvider(),
+            child: MaterialApp(
+              title: '67-E Book',
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                primarySwatch: Colors.green,
+                fontFamily: 'Kanit',
+              ),
+              initialRoute: AppRoutes.splash,
+              routes: AppRoutes.getRoutes(),
+            ),
           ),
         ),
       ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
-import '../providers/favorite_provider.dart'; // 🛑 1. เพิ่ม Import Provider
+import '../providers/favorite_provider.dart';
+import '../providers/auth_provider.dart';
 
 // สีพื้นหลังหนังสือ วนซ้ำแต่ละ card
 const List<Color> _bookBgColors = [
@@ -155,6 +156,16 @@ class _ProductCardState extends State<ProductCard> {
                     // 🛑 2. ปรับปุ่ม Favorite ให้ใช้ State จาก Provider
                     GestureDetector(
                       onTap: () {
+                        // 🛑 2. เช็ค Auth ก่อนกด Favorite
+                        if (!AuthProviderWidget.of(context).isLoggedIn) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please login to add favorites'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
                         FavoriteProviderWidget.of(context).toggleFavorite(
                           title: widget.title,
                           description: widget.description,

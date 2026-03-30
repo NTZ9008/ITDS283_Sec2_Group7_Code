@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
-import '../providers/cart_provider.dart'; // 🛑 เพิ่ม Import นี้
+import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -441,6 +442,18 @@ class _CartScreenState extends State<CartScreen> {
             child: ElevatedButton(
               onPressed: subtotal > 0
                   ? () {
+                      if (!AuthProviderWidget.of(context).isLoggedIn) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please login to proceed to checkout',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return; // หยุดการทำงาน
+                      }
+
                       final selectedItems = items
                           .where((item) => item.selected)
                           .map(

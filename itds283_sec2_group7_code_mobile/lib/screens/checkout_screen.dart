@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:remixicon/remixicon.dart';
+// 🛑 นำเข้า Provider สำหรับจัดการคลังหนังสือและตะกร้า
+import '../providers/library_provider.dart';
+import '../providers/cart_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -76,6 +79,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           {};
       checkoutData['items'] = args['items'];
       checkoutData['totalPaid'] = args['total'];
+
+      // 🛑 เมื่อถึงหน้า Confirm สั่งให้เอาหนังสือที่ซื้อเข้าคลัง Library
+      if (checkoutData['items'] != null) {
+        LibraryProviderWidget.of(context).addItems(checkoutData['items']);
+
+        // 🛑 เคลียร์สินค้าที่เพิ่งซื้อออกจากตะกร้า Cart ด้วย
+        final cartProvider = CartProviderWidget.of(context);
+        for (var item in checkoutData['items']) {
+          final cartItem = cartProvider.items
+              .where((e) => e.title == item['title'])
+              .firstOrNull;
+          if (cartItem != null) {
+            cartProvider.removeItem(cartItem);
+          }
+        }
+      }
     }
 
     if (_currentStep < 3) {
@@ -271,10 +290,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             isPhone: true,
           ),
 
-          // 🛑 เปลี่ยนมาใช้แบบกรอกข้อความสำหรับ Province
           _buildTextField('Province*', _provinceController, 'Enter Province'),
 
-          // 🛑 เปลี่ยนมาใช้แบบกรอกข้อความสำหรับ City/District
           _buildTextField(
             'City/District*',
             _cityController,
@@ -537,15 +554,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           const SizedBox(height: 15),
-          _buildActionButton(
-            'Go to library',
-            const Color(0xFF0066FF),
-            () => Navigator.pushNamedAndRemoveUntil(
+          _buildActionButton('Go to library', const Color(0xFF0066FF), () {
+            Navigator.pushNamedAndRemoveUntil(
               context,
-              '/lib',
+              '/main',
               (route) => false,
-            ),
-          ),
+            );
+
+            Navigator.pushNamed(context, '/lib');
+          }),
         ],
       ),
     );

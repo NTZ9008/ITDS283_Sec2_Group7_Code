@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
-// 🛑 1. Import Provider เข้ามาใช้งาน
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
+import '../providers/auth_provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String title;
@@ -26,8 +26,6 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  // 🛑 ลบตัวแปร bool isFavorite ทิ้ง เพราะเราจะใช้จาก Provider
-
   bool get _isAsset => widget.imageUrl.startsWith('assets/');
 
   Widget _buildImage() {
@@ -134,7 +132,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           GestureDetector(
             onTap: () {
-              // 🛑 สลับสถานะการกดหัวใจผ่าน Provider
+              if (!AuthProviderWidget.of(context).isLoggedIn) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please login to add favorites'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
               FavoriteProviderWidget.of(context).toggleFavorite(
                 title: widget.title,
                 description: widget.description,
