@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorite_provider.dart'; // 🛑 1. Import FavoriteProvider
 import '../routes/app_routes.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -13,46 +14,48 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
+  // 🛑 2. เปลี่ยนชื่อ Title ให้ไม่ซ้ำกัน เพื่อป้องกันปัญหากด Favorite แล้วแดงทุกอัน
   final List<Map<String, dynamic>> _allBooks = [
     {
-      'title': 'Aaaaa Aaaa',
+      'title': 'Mathematics 101',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
       'price': 120.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
-      'title': 'Aaaaa Aaaa',
+      'title': 'Science Basic',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 140.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
-      'title': 'Aaaaa Aaaa',
+      'title': 'English Grammar',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 150.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
-      'title': 'Aaaaa Aaaa',
+      'title': 'Biology Exploring',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 220.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
   ];
 
-  // Track favorite state per index
-  final Set<int> _favorites = {};
+  // ลบ Set _favorites ออก เพราะเราจะใช้ Provider แทนแล้ว
 
   List<Map<String, dynamic>> get _filtered {
     if (_query.isEmpty) return _allBooks;
     return _allBooks
-        .where((b) =>
-            (b['title'] as String)
-                .toLowerCase()
-                .contains(_query.toLowerCase()) ||
-            (b['description'] as String)
-                .toLowerCase()
-                .contains(_query.toLowerCase()))
+        .where(
+          (b) =>
+              (b['title'] as String).toLowerCase().contains(
+                _query.toLowerCase(),
+              ) ||
+              (b['description'] as String).toLowerCase().contains(
+                _query.toLowerCase(),
+              ),
+        )
         .toList();
   }
 
@@ -76,9 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
             _buildSearchBar(),
             const SizedBox(height: 12),
             Expanded(
-              child: results.isEmpty
-                  ? _buildEmpty()
-                  : _buildGrid(results),
+              child: results.isEmpty ? _buildEmpty() : _buildGrid(results),
             ),
           ],
         ),
@@ -94,8 +95,11 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios_new,
-                size: 18, color: Colors.black87),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
@@ -132,8 +136,7 @@ class _SearchScreenState extends State<SearchScreen> {
             hintStyle: TextStyle(fontSize: 14, color: Colors.black38),
             prefixIcon: Icon(Icons.search, color: Colors.black45, size: 22),
             border: InputBorder.none,
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ),
@@ -147,8 +150,10 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           Icon(Icons.search_off, size: 64, color: Colors.black26),
           SizedBox(height: 12),
-          Text('No results found',
-              style: TextStyle(fontSize: 16, color: Colors.black45)),
+          Text(
+            'No results found',
+            style: TextStyle(fontSize: 16, color: Colors.black45),
+          ),
         ],
       ),
     );
@@ -164,13 +169,18 @@ class _SearchScreenState extends State<SearchScreen> {
         mainAxisSpacing: 12,
       ),
       itemCount: results.length,
-      itemBuilder: (context, index) => _buildCard(context, index, results[index]),
+      itemBuilder: (context, index) =>
+          _buildCard(context, index, results[index]),
     );
   }
 
   Widget _buildCard(
-      BuildContext context, int index, Map<String, dynamic> book) {
-    final isFav = _favorites.contains(index);
+    BuildContext context,
+    int index,
+    Map<String, dynamic> book,
+  ) {
+    // 🛑 3. ดึงสถานะ Favorite จาก Provider
+    final isFav = FavoriteProviderWidget.of(context).isFavorite(book['title']);
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -194,8 +204,9 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             // Cover image
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
               child: Container(
                 height: 160,
                 width: double.infinity,
@@ -204,9 +215,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   book['imageUrl'],
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
-                      Icons.menu_book_rounded,
-                      color: Color(0xFF5B9BD5),
-                      size: 60),
+                    Icons.menu_book_rounded,
+                    color: Color(0xFF5B9BD5),
+                    size: 60,
+                  ),
                 ),
               ),
             ),
@@ -218,15 +230,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   Text(
                     book['title'],
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
                   Text(
                     book['description'],
-                    style:
-                        const TextStyle(fontSize: 11, color: Colors.black54),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -244,15 +257,16 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       Row(
                         children: [
-                          // Favorite button
+                          // 🛑 4. ปุ่ม Favorite เรียกใช้งาน Provider
                           GestureDetector(
-                            onTap: () => setState(() {
-                              if (isFav) {
-                                _favorites.remove(index);
-                              } else {
-                                _favorites.add(index);
-                              }
-                            }),
+                            onTap: () {
+                              FavoriteProviderWidget.of(context).toggleFavorite(
+                                title: book['title'],
+                                description: book['description'],
+                                price: book['price'],
+                                imageUrl: book['imageUrl'],
+                              );
+                            },
                             child: Container(
                               width: 30,
                               height: 30,
@@ -261,16 +275,14 @@ class _SearchScreenState extends State<SearchScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isFav
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: Colors.white,
+                                isFav ? Icons.favorite : Icons.favorite_border,
+                                color: isFav ? Colors.redAccent : Colors.white,
                                 size: 16,
                               ),
                             ),
                           ),
                           const SizedBox(width: 6),
-                          // Add to cart button
+                          // 🛑 5. ปุ่ม Add to cart (ใช้ Provider เดิมที่คุณเขียนไว้ได้เลย)
                           GestureDetector(
                             onTap: () {
                               CartProviderWidget.of(context).addItem(
@@ -281,13 +293,14 @@ class _SearchScreenState extends State<SearchScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      'Added "${book['title']}" to cart'),
+                                    'Added "${book['title']}" to cart',
+                                  ),
                                   backgroundColor: const Color(0xFF00D13B),
                                   behavior: SnackBarBehavior.floating,
                                   duration: const Duration(seconds: 2),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10)),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                               );
                             },
@@ -298,8 +311,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                 color: Color(0xFF006B3F),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.add,
-                                  color: Colors.white, size: 18),
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
                           ),
                         ],

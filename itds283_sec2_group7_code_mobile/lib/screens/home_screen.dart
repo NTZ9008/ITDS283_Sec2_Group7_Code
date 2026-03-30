@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../widgets/product_card.dart';
 
-// 🛑 1. เปลี่ยนเป็น StatefulWidget เพื่อให้ Categories กดเปลี่ยนสีได้
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -11,49 +10,63 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 🛑 เพิ่มตัวแปรเก็บว่าเลือกหมวดหมู่ไหนอยู่ (ค่าเริ่มต้นคือ 0)
+  // 🛑 1. ตัวแปรเก็บ index ที่ถูกเลือก และรายชื่อ Category พร้อมไอคอนตามวิชา
   int _selectedCategoryIndex = 0;
-
-  // ข้อมูลหมวดหมู่ (มีทั้งไอคอนและชื่อ)
+  
   final List<Map<String, dynamic>> _categories = [
-    {'icon': Remix.reactjs_line, 'name': 'Coding'},
-    {'icon': Remix.palette_line, 'name': 'Design'},
-    {'icon': Remix.briefcase_line, 'name': 'Business'},
-    {'icon': Remix.line_chart_line, 'name': 'Finance'},
-    {'icon': Remix.heart_pulse_line, 'name': 'Health'},
+    {'icon': Remix.function_line, 'name': 'Math'}, // ไอคอนฟังก์ชันเลข
+    {'icon': Remix.microscope_line, 'name': 'Science'}, // ไอคอนกล้องจุลทรรศน์
+    {'icon': Remix.book_read_line, 'name': 'English'}, // ไอคอนอ่านหนังสือ
+    {'icon': Remix.leaf_line, 'name': 'Bio'}, // ไอคอนใบไม้สำหรับชีวะ
+    {'icon': Remix.test_tube_line, 'name': 'Chemi'}, // ไอคอนหลอดทดลองสำหรับเคมี
+    {'icon': Remix.atom_line, 'name': 'Physic'}, // ไอคอนอะตอมสำหรับฟิสิกส์
   ];
 
-  // (Mock Data เดิม เปลี่ยนชื่อเรื่องให้ไม่ซ้ำกันตามที่คุยกันไว้ครับ)
+  // 🛑 2. Mock Data: ข้อมูลหนังสือที่ติด Tag Category ตามวิชาใหม่
   final List<Map<String, dynamic>> mockProducts = const [
     {
-      'title': 'Flutter Mastery',
-      'description': 'เจาะลึกการออกแบบ UI และ Animation ใน Flutter แบบมืออาชีพ',
-      'price': 199.00,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=400&auto=format&fit=crop',
-    },
-    {
-      'title': 'React Native 101',
-      'description': 'พื้นฐานการสร้างแอป Cross-platform ด้วย React Native',
-      'price': 149.00,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=400&auto=format&fit=crop',
-    },
-    {
-      'title': 'UI/UX Design',
-      'description': 'ออกแบบหน้าจอให้โดนใจผู้ใช้งานด้วย Figma',
+      'title': 'Calculus Mastery',
+      'description': 'เจาะลึกแคลคูลัส 1-3 ครบจบในเล่มเดียว',
       'price': 250.00,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=400&auto=format&fit=crop',
+      'category': 'Math', // หมวดเลข
+      'imageUrl': 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=400&auto=format&fit=crop',
     },
     {
-      'title': 'Clean Architecture',
-      'description': 'เขียนโค้ดให้ดูแลรักษาง่าย โครงสร้างชัดเจน',
+      'title': 'The Science of Space',
+      'description': 'สำรวจจักรวาลอันกว้างใหญ่',
+      'price': 199.00,
+      'category': 'Science', // หมวดวิทย์
+      'imageUrl': 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      'title': 'English Grammar Pro',
+      'description': 'สรุปแกรมม่าครบทุกเรื่องเตรียมสอบ T-GAT',
+      'price': 310.00,
+      'category': 'English', // หมวดอังกฤษ
+      'imageUrl': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      'title': 'Plant Cell Biology',
+      'description': 'โครงสร้างและหน้าที่ของเซลล์พืช',
       'price': 299.00,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=400&auto=format&fit=crop',
+      'category': 'Bio', // หมวดชีวะ
+      'imageUrl': 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      'title': 'Statistics for CompSci',
+      'description': 'สถิติสำหรับวิทยาการคอมพิวเตอร์',
+      'price': 210.00,
+      'category': 'Math', // หมวดเลข
+      'imageUrl': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop',
     },
   ];
+
+  // 🛑 3. ฟังก์ชันกรองสินค้า: ดึงมาเฉพาะเล่มที่ category ตรงกับที่ผู้ใช้กดเลือก
+  List<Map<String, dynamic>> get _filteredProducts {
+    // ดึงชื่อหมวดหมู่ที่เลือกอยู่ปัจจุบัน เช่น 'Math'
+    String selectedCatName = _categories[_selectedCategoryIndex]['name'];
+    return mockProducts.where((p) => p['category'] == selectedCatName).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildHeader(context),
               _buildBanner(),
               _buildSectionTitle('Categories'),
-              _buildCategories(),
+              _buildCategories(), // แถบหมวดหมู่ที่มีไอคอนตามวิชา
               _buildSectionTitle('Best Seller'),
               _buildBestSeller(),
               _buildSectionTitle('New Collection'),
-              _buildNewCollection(),
+              _buildNewCollection(), // สินค้าที่ถูกกรองแล้ว
               const SizedBox(height: 20),
             ],
           ),
@@ -119,18 +132,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🛑 2. อัปเดต Banner ให้กดได้ และดูสมจริงขึ้น
   Widget _buildBanner() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: GestureDetector(
         onTap: () {
-          // อนาคตสามารถใส่คำสั่งเด้งไปหน้ารวมโปรโมชันได้
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Special Offer Clicked!'),
-              duration: Duration(seconds: 1),
-            ),
+            const SnackBar(content: Text('Special Offer Clicked!'), duration: Duration(seconds: 1)),
           );
         },
         child: Container(
@@ -148,12 +156,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.orange.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
-              ),
+              )
             ],
           ),
           child: Stack(
             children: [
-              // ภาพจางๆ ด้านหลัง (ถ้ารูปพังจะโชว์สี Gradient แทน)
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
                 child: Image.network(
@@ -161,14 +168,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   height: double.infinity,
                   fit: BoxFit.cover,
-                  color: Colors.black.withValues(
-                    alpha: 0.3,
-                  ), // ทำให้รูปมืดลงนิดนึงให้ตัวหนังสือเด่น
+                  color: Colors.black.withValues(alpha: 0.3), 
                   colorBlendMode: BlendMode.darken,
                   errorBuilder: (c, e, s) => const SizedBox(),
                 ),
               ),
-              // ข้อความโปรโมชัน
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -176,33 +180,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      child: const Text(
-                        'PROMO',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
+                      child: const Text('PROMO', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Special Offer\nGet 20% Off',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
-                      ),
-                    ),
+                    const Text('Special Offer\nGet 20% Off', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.2)),
                   ],
                 ),
               ),
@@ -227,17 +213,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🛑 3. อัปเดต Categories ให้กดเลือกได้และมีข้อความ
+  // 🛑 4. อัปเดต Categories: หน้าตาเหมือนเดิม (ไอคอนในช่องสี่เหลี่ยม) แต่ข้อมูลเป็นวิชาตาม reference
   Widget _buildCategories() {
     return SizedBox(
-      height: 90, // เพิ่มความสูงเผื่อที่ให้ข้อความ
+      height: 90, // เผื่อความสูงให้ชื่อด้านล่าง
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         itemCount: _categories.length,
         itemBuilder: (context, index) {
+          final category = _categories[index];
           bool isSelected = index == _selectedCategoryIndex;
-
+          
           return GestureDetector(
             onTap: () {
               setState(() {
@@ -254,12 +241,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 60,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF006B3F)
-                          : const Color(0xFF00D13B).withValues(alpha: 0.1),
+                          ? const Color(0xFF006B3F) // สีเขียวเข้มเมื่อเลือก
+                          : const Color(0xFF00D13B).withValues(alpha: 0.1), // สีเขียวจางๆ เมื่อไม่ได้เลือก
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Icon(
-                      _categories[index]['icon'],
+                      category['icon'],
                       color: isSelected
                           ? Colors.white
                           : const Color(0xFF00D13B).withValues(alpha: 0.7),
@@ -268,15 +255,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _categories[index]['name'],
+                    category['name'],
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? const Color(0xFF006B3F)
-                          : Colors.black54,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? const Color(0xFF006B3F) : Colors.black54,
                     ),
                   ),
                 ],
@@ -334,6 +317,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNewCollection() {
+    // 🛑 5. เรียกใช้สินค้าที่ถูกกรอง (_filteredProducts) แทนของเดิม
+    final displayProducts = _filteredProducts;
+
+    if (displayProducts.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(40.0),
+        child: Center(
+          child: Text('No books in this category yet.', style: TextStyle(color: Colors.black45)),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GridView.builder(
@@ -341,14 +336,13 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio:
-              0.50, // หากเปลี่ยนชื่อหนังสือแล้วยาวไป ปรับค่านี้ให้มากขึ้นได้ครับ (เช่น 0.55)
+          childAspectRatio: 0.50, 
           crossAxisSpacing: 15,
           mainAxisSpacing: 15,
         ),
-        itemCount: mockProducts.length,
+        itemCount: displayProducts.length,
         itemBuilder: (context, index) {
-          final product = mockProducts[index];
+          final product = displayProducts[index];
 
           return ProductCard(
             title: product['title'],
