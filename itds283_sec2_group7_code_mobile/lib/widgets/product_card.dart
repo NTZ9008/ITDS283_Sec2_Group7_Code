@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import '../routes/app_routes.dart';
+
+// สีพื้นหลังหนังสือ วนซ้ำแต่ละ card
+const List<Color> _bookBgColors = [
+  Color(0xFFB2EEF4), // ฟ้า
+  Color(0xFFFFCDD2), // ชมพู
+  Color(0xFFC8E6C9), // เขียว
+  Color(0xFFFFF9C4), // เหลือง
+  Color(0xFFE1BEE7), // ม่วง
+  Color(0xFFFFE0B2), // ส้ม
+];
+
+const List<Color> _bookColors = [
+  Color(0xFF5B9BD5), // ฟ้า
+  Color(0xFFE57373), // แดง
+  Color(0xFF66BB6A), // เขียว
+  Color(0xFFFFCA28), // เหลือง
+  Color(0xFFAB47BC), // ม่วง
+  Color(0xFFFF8A65), // ส้ม
+];
 
 class ProductCard extends StatefulWidget {
   final String title;
   final String description;
   final double price;
   final String imageUrl;
+  final int index; // เพิ่ม index เพื่อเลือกสี
 
   const ProductCard({
     super.key,
@@ -13,6 +34,7 @@ class ProductCard extends StatefulWidget {
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.index = 0,
   });
 
   @override
@@ -22,78 +44,195 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   bool isFavorite = false;
 
+  bool get _isAsset => widget.imageUrl.startsWith('assets/');
+
+  Color get _bgColor => _bookBgColors[widget.index % _bookBgColors.length];
+  Color get _bookColor => _bookColors[widget.index % _bookColors.length];
+
+  Widget _buildImage() {
+    if (_isAsset) {
+      return Image.asset(
+        widget.imageUrl,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
+      );
+    } else {
+      return Image.network(
+        widget.imageUrl,
+        key: ValueKey(widget.imageUrl),
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(
+            child: CircularProgressIndicator(
+                color: Color(0xFF00D13B), strokeWidth: 2),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) =>
+            _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            height: 180.0,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.imageUrl),
-                fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.productDetail,
+          arguments: {
+            'title': widget.title,
+            'author': 'Name Of Auther',
+            'description': widget.description,
+            'price': widget.price,
+            'imageUrl': widget.imageUrl,
+          },
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              height: 180.0,
+              decoration: BoxDecoration(
+                color: _bgColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _buildImage(),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            widget.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            widget.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
-          ),
-          const Spacer(),
-          const Divider(
-            color: Color(0xFFF5D6C6),
-            thickness: 1.0,
-            height: 15.0,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('\$${widget.price.toStringAsFixed(2)}',
+            const SizedBox(height: 10),
+            Text(
+              widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              widget.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+            const Spacer(),
+            const Divider(
+                color: Color(0xFFF5D6C6), thickness: 1.0, height: 15.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '\$${widget.price.toStringAsFixed(2)}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF00D13B),
-                      fontSize: 16)),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isFavorite = !isFavorite;
-                      });
-                    },
-                    child: Icon(
-                      isFavorite ? Remix.heart_3_fill : Remix.heart_3_line,
-                      color: isFavorite ? const Color(0xFF0000).withOpacity(0.8) : Colors.grey,
-                      size: 20,
-                    ),
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00D13B),
+                    fontSize: 16,
                   ),
-                  const SizedBox(width: 5),
-                  const Icon(Remix.add_circle_fill,
-                      color: Color(0xFF006B3F), size: 24),
-                ],
-              )
-            ],
-          )
-        ],
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => isFavorite = !isFavorite),
+                      child: Icon(
+                        isFavorite ? Remix.heart_3_fill : Remix.heart_3_line,
+                        color: isFavorite
+                            ? Colors.red.withOpacity(0.8)
+                            : Colors.grey,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Icon(Remix.add_circle_fill,
+                        color: Color(0xFF006B3F), size: 24),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _BookPlaceholder extends StatelessWidget {
+  final Color bgColor;
+  final Color bookColor;
+
+  const _BookPlaceholder({
+    required this.bgColor,
+    required this.bookColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: bgColor,
+      child: Center(
+        child: CustomPaint(
+          size: const Size(80, 90),
+          painter: _BookPainter(bookColor: bookColor),
+        ),
+      ),
+    );
+  }
+}
+
+class _BookPainter extends CustomPainter {
+  final Color bookColor;
+  const _BookPainter({required this.bookColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final spineW = size.width * 0.12;
+    final spineColor = Color.fromARGB(
+      bookColor.alpha,
+      (bookColor.red * 0.7).toInt(),
+      (bookColor.green * 0.7).toInt(),
+      (bookColor.blue * 0.7).toInt(),
+    );
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, spineW, size.height),
+        Paint()..color = spineColor);
+    canvas.drawRect(
+        Rect.fromLTWH(spineW, 0, size.width - spineW, size.height),
+        Paint()..color = bookColor);
+    canvas.drawRect(
+        Rect.fromLTWH(size.width - 5, size.height * 0.05, 5, size.height * 0.9),
+        Paint()..color = const Color(0xFFEEEEEE));
+
+    final linePaint = Paint()
+      ..color = Colors.white.withOpacity(0.35)
+      ..strokeWidth = 1.5;
+    for (int i = 1; i <= 3; i++) {
+      final y = size.height * (0.25 * i);
+      canvas.drawLine(
+          Offset(spineW + 8, y), Offset(size.width - 10, y), linePaint);
+    }
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(size.width * 0.6, 0)
+        ..lineTo(size.width * 0.75, 0)
+        ..lineTo(size.width * 0.75, size.height * 0.28)
+        ..lineTo(size.width * 0.675, size.height * 0.22)
+        ..lineTo(size.width * 0.6, size.height * 0.28)
+        ..close(),
+      Paint()..color = const Color(0xFFE53935),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
