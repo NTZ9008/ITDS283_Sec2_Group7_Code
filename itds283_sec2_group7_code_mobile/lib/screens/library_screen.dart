@@ -1,87 +1,15 @@
 import 'package:flutter/material.dart';
+import '../providers/library_provider.dart'; // 🛑 นำเข้า Library Provider
 
-class LibraryBook {
-  final String title;
-  final String author;
-  final String imageUrl;
-  bool isDownloaded;
-
-  LibraryBook({
-    required this.title,
-    required this.author,
-    required this.imageUrl,
-    this.isDownloaded = false,
-  });
-}
-
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
-}
-
-class _LibraryScreenState extends State<LibraryScreen> {
-  final List<LibraryBook> _books = [
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: false,
-    ),
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: true,
-    ),
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: false,
-    ),
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: true,
-    ),
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: true,
-    ),
-    LibraryBook(
-      title: 'Aaaaa Aaaa',
-      author: 'Joshua Williamson',
-      imageUrl: 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-      isDownloaded: true,
-    ),
-  ];
-
-  void _toggleDownload(int index) {
-    setState(() {
-      _books[index].isDownloaded = !_books[index].isDownloaded;
-    });
-
-    final book = _books[index];
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(book.isDownloaded
-            ? '"${book.title}" downloaded'
-            : '"${book.title}" removed from downloads'),
-        backgroundColor: const Color(0xFF00D13B),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // 🛑 ดึงรายการหนังสือที่ซื้อแล้ว
+    final libraryProvider = LibraryProviderWidget.of(context);
+    final books = libraryProvider.items;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -89,7 +17,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(context),
-            Expanded(child: _buildGrid()),
+            Expanded(
+              child: books.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "You haven't purchased any books yet.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    )
+                  : _buildGrid(books, libraryProvider, context),
+            ),
           ],
         ),
       ),
@@ -104,8 +41,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios_new,
-                size: 18, color: Colors.black87),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 14),
           const Text(
@@ -125,7 +65,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildGrid() {
+  Widget _buildGrid(
+    List<LibraryItem> books,
+    LibraryProvider provider,
+    BuildContext context,
+  ) {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -134,17 +78,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 16,
       ),
-      itemCount: _books.length,
-      itemBuilder: (context, index) => _buildBookCard(index),
+      itemCount: books.length,
+      itemBuilder: (context, index) =>
+          _buildBookCard(books[index], index, provider, context),
     );
   }
 
-  Widget _buildBookCard(int index) {
-    final book = _books[index];
+  Widget _buildBookCard(
+    LibraryItem book,
+    int index,
+    LibraryProvider provider,
+    BuildContext context,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Book cover
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -155,15 +103,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 book.imageUrl,
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => const Icon(
-                    Icons.menu_book_rounded,
-                    color: Color(0xFF5B9BD5),
-                    size: 60),
+                  Icons.menu_book_rounded,
+                  color: Color(0xFF5B9BD5),
+                  size: 60,
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(height: 8),
-        // Title + download icon
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -180,7 +128,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () => _toggleDownload(index),
+              onTap: () {
+                // 🛑 สลับสถานะการดาวน์โหลดผ่าน Provider
+                provider.toggleDownload(index);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      provider.items[index].isDownloaded
+                          ? '"${book.title}" downloaded'
+                          : '"${book.title}" removed from downloads',
+                    ),
+                    backgroundColor: const Color(0xFF00D13B),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              },
               child: Icon(
                 book.isDownloaded
                     ? Icons.cloud_off_outlined
