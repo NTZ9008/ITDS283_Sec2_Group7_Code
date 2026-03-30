@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../providers/favorite_provider.dart'; // 🛑 เพิ่ม Import
-import '../providers/cart_provider.dart'; // 🛑 เผื่อไว้ใช้ Add to Cart จากหน้านี้
+import '../providers/favorite_provider.dart';
+import '../routes/app_routes.dart'; // 🛑 1. นำเข้า AppRoutes สำหรับเปลี่ยนหน้า
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 🛑 ดึงข้อมูลหนังสือที่ถูกใจมาจาก Provider
+    // ดึงข้อมูลหนังสือที่ถูกใจมาจาก Provider
     final favProvider = FavoriteProviderWidget.of(context);
     final items = favProvider.items;
 
@@ -36,7 +36,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    // (โค้ด Header เหมือนเดิมครับ)
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Column(
@@ -151,20 +150,24 @@ class FavoritesScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // ปุ่ม Add to cart สำหรับซื้อสินค้าจากหน้า Favorite เลย
+                    // 🛑 2. แก้ไขปุ่มให้วิ่งไปหน้า Checkout แทนการ Add to Cart
                     GestureDetector(
                       onTap: () {
-                        CartProviderWidget.of(context).addItem(
-                          title: item.title,
-                          price: item.price,
-                          imageUrl: item.imageUrl,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Added to cart'),
-                            backgroundColor: Color(0xFF00D13B),
-                            duration: Duration(seconds: 1),
-                          ),
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.checkout,
+                          arguments: {
+                            'items': [
+                              {
+                                'title': item.title,
+                                'price': item.price,
+                                'quantity': 1,
+                              },
+                            ],
+                            'subtotal': item.price,
+                            'discount': 0.0,
+                            'total': item.price,
+                          },
                         );
                       },
                       child: Container(

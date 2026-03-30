@@ -333,7 +333,7 @@ class _CartScreenState extends State<CartScreen> {
                 else
                   TextButton(
                     onPressed: () {
-                      if (_promoController.text.trim() == 'YellowChick') {
+                      if (_promoController.text.trim() == 'ICT555') {
                         setState(() {
                           _isPromoApplied = true;
                           FocusScope.of(context).unfocus();
