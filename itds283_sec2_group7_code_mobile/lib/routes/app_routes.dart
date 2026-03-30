@@ -40,7 +40,13 @@ class AppRoutes {
       checkout: (context) => const CheckoutScreen(),
       search: (context) => const SearchScreen(),
       lib: (context) => const LibraryScreen(),
-      read: (context) => const ReadScreen(),
+      read: (context) {
+        final args =
+            ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>? ??
+            {};
+        return ReadScreen(bookIndex: args['bookIndex'] ?? 0);
+      },
     };
   }
 }

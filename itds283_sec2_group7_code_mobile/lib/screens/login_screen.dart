@@ -16,12 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // 🛑 ตัวแปรเช็คสถานะการซ่อนรหัสผ่าน
   bool _isObscure = true;
 
-  // ==========================================
-  // 🟢 1. ระบบ Google Sign-In
-  // ==========================================
   Future<void> _signInWithGoogle() async {
     try {
       _showLoading();
@@ -39,23 +35,17 @@ class _LoginScreenState extends State<LoginScreen> {
         idToken: googleAuth.idToken,
       );
 
-      // ล็อกอินเข้า Firebase
       await FirebaseAuth.instance.signInWithCredential(credential);
 
       if (mounted) {
-        // 🛑 ดึงข้อมูล User จาก Firebase ล่าสุด
         final user = FirebaseAuth.instance.currentUser;
 
-        // 🛑 อัปเดตสถานะแอปว่า "ล็อกอินแล้ว" พร้อมส่งชื่อและอีเมลไปเก็บไว้ที่ AuthProvider
         AuthProviderWidget.of(
           context,
         ).login(user?.displayName ?? 'Google User', user?.email ?? '');
 
-        Navigator.pop(context); // ปิดหน้าต่าง Loading
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.main,
-        ); // กลับไปหน้าหลัก
+        Navigator.pop(context);
+        Navigator.pushReplacementNamed(context, AppRoutes.main);
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
@@ -79,7 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // 🛑 แจ้งเตือนเมื่อกด Log In ปกติ
   void _showBackendAlert() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/library_provider.dart';
-import 'read_screen.dart'; // 🛑 1. นำเข้าหน้า ReadScreen
+import '../routes/app_routes.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -79,27 +79,88 @@ class LibraryScreen extends StatelessWidget {
         mainAxisSpacing: 16,
       ),
       itemCount: books.length,
-      itemBuilder: (context, index) =>
-          _buildBookCard(books[index], index, provider, context),
+      itemBuilder: (context, index) => _LibraryBookCard(
+        book: books[index],
+        index: index,
+        provider: provider,
+      ),
     );
   }
+}
 
-  Widget _buildBookCard(
-    LibraryItem book,
-    int index,
-    LibraryProvider provider,
-    BuildContext context,
-  ) {
+class _LibraryBookCard extends StatefulWidget {
+  final LibraryItem book;
+  final int index;
+  final LibraryProvider provider;
+
+  const _LibraryBookCard({
+    required this.book,
+    required this.index,
+    required this.provider,
+  });
+
+  @override
+  State<_LibraryBookCard> createState() => _LibraryBookCardState();
+}
+
+class _LibraryBookCardState extends State<_LibraryBookCard> {
+  bool _isDownloading = false;
+
+  Future<void> _handleDownloadToggle() async {
+    if (widget.book.isDownloaded) {
+      widget.provider.toggleDownload(widget.index);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${widget.book.title}" removed from downloads'),
+          backgroundColor: const Color(0xFF00D13B),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } else {
+      if (_isDownloading) return;
+
+      setState(() {
+        _isDownloading = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+        widget.provider.toggleDownload(widget.index);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"${widget.book.title}" downloaded'),
+            backgroundColor: const Color(0xFF00D13B),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          // 🛑 2. หุ้มปกหนังสือด้วย GestureDetector เพื่อให้กดอ่านได้
           child: GestureDetector(
             onTap: () {
-              Navigator.push(
+              Navigator.pushNamed(
                 context,
-                MaterialPageRoute(builder: (context) => const ReadScreen()),
+                AppRoutes.read,
+                arguments: {'bookIndex': widget.index},
               );
             },
             child: ClipRRect(
@@ -108,7 +169,7 @@ class LibraryScreen extends StatelessWidget {
                 width: double.infinity,
                 color: const Color(0xFFB2EEF4),
                 child: Image.network(
-                  book.imageUrl,
+                  widget.book.imageUrl,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.menu_book_rounded,
@@ -126,7 +187,7 @@ class LibraryScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                book.title,
+                widget.book.title,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -137,37 +198,31 @@ class LibraryScreen extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                provider.toggleDownload(index);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      provider.items[index].isDownloaded
-                          ? '"${book.title}" downloaded'
-                          : '"${book.title}" removed from downloads',
+              onTap: _handleDownloadToggle,
+              child: _isDownloading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF00D13B),
+                      ),
+                    )
+                  : Icon(
+                      widget.book.isDownloaded
+                          ? Icons.cloud_off_outlined
+                          : Icons.cloud_download_outlined,
+                      size: 18,
+                      color: widget.book.isDownloaded
+                          ? const Color(0xFF00D13B)
+                          : Colors.black45,
                     ),
-                    backgroundColor: const Color(0xFF00D13B),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-              },
-              child: Icon(
-                book.isDownloaded
-                    ? Icons.cloud_off_outlined
-                    : Icons.cloud_download_outlined,
-                size: 18,
-                color: Colors.black45,
-              ),
             ),
           ],
         ),
         const SizedBox(height: 2),
         Text(
-          book.author,
+          widget.book.author,
           style: const TextStyle(fontSize: 11, color: Colors.black54),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
