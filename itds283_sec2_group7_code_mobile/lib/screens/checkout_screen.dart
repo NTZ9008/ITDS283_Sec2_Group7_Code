@@ -38,6 +38,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
+    _provinceController.dispose();
+    _cityController.dispose();
     _addressController.dispose();
     _postalController.dispose();
     super.dispose();
