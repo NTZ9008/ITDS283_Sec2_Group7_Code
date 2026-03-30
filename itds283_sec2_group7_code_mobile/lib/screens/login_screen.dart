@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:remixicon/remixicon.dart';
-import '../routes/app_routes.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,191 +9,198 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  
-  // 🛑 ตัวแปรเช็คสถานะการซ่อนรหัสผ่าน
-  bool _isObscure = true; 
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  // ==========================================
-  // 🟢 1. ระบบ Google Sign-In
-  // ==========================================
-  Future<void> _signInWithGoogle() async {
-    try {
-      _showLoading();
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        if (mounted) Navigator.pop(context);
-        return;
-      }
+  void _login() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all fields'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (mounted) {
-        Navigator.pop(context);
-        Navigator.pushReplacementNamed(context, AppRoutes.main);
-      }
-    } catch (e) {
-      if (mounted) Navigator.pop(context);
-      _showError("Google Sign-In Failed: $e");
+      return;
     }
-  }
 
-  void _showLoading() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFF2B58F6))),
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (!mounted) return;
+
+    // Mock login — ยอมรับทุก username/password
+    AuthProviderWidget.of(context).login(
+      username,
+      '$username@example.com',
     );
-  }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
-  }
-
-  // 🛑 แจ้งเตือนเมื่อกด Log In ปกติ
-  void _showBackendAlert() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("ระบบ Login ปกติกำลังรอเชื่อม Backend กรุณาใช้ Google Login ชั่วคราวครับ"), 
-        backgroundColor: Colors.orange,
-      )
-    );
+    setState(() => _isLoading = false);
+    Navigator.pop(context); // กลับไปหน้า User
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1ECA5A),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Container(
-                padding: const EdgeInsets.all(25.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB5E4BE), 
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text("67-E Book", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
-                    const SizedBox(height: 10),
-                    const Text("Login", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    const SizedBox(height: 5),
-                    const Text("Enter your email and password to log in", style: TextStyle(fontSize: 12, color: Colors.black54)),
-                    const SizedBox(height: 25),
-
-                    // ช่อง Email
-                    Container(
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                      child: TextField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter your email', 
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    // ช่อง Password
-                    Container(
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                      child: TextField(
-                        controller: _passwordController,
-                        obscureText: _isObscure, 
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password', 
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isObscure ? Icons.visibility_off : Icons.visibility, 
-                              color: Colors.black26
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isObscure = !_isObscure; 
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // ปุ่ม Log In ธรรมดา
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _showBackendAlert, 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2B58F6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text("Log In", style: TextStyle(color: Colors.white, fontSize: 16)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // เส้นแบ่ง Or login with
-                    Row(
-                      children: const [
-                        Expanded(child: Divider(color: Colors.black26)),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text("Or login with", style: TextStyle(color: Colors.black54, fontSize: 12)),
-                        ),
-                        Expanded(child: Divider(color: Colors.black26)),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // ปุ่ม Google 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _signInWithGoogle, 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Icon(Remix.google_fill, color: Colors.redAccent, size: 28),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // ปุ่มไปหน้า Sign Up
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Don't have an account?", style: TextStyle(fontSize: 12, color: Colors.black54)),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.signup);
-                          },
-                          child: const Text("Sign Up", style: TextStyle(fontSize: 12, color: Color(0xFF2B58F6))),
-                        ),
-                      ],
-                    ),
-                  ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.arrow_back_ios_new,
+                    size: 18, color: Colors.black87),
+              ),
+              const SizedBox(height: 40),
+              // Logo / Title
+              const Text(
+                '67-E Book',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF00D13B),
+                  fontFamily: 'Jua',
                 ),
               ),
+              const SizedBox(height: 6),
+              const Text(
+                'Sign in to your account',
+                style: TextStyle(fontSize: 15, color: Colors.black54),
+              ),
+              const SizedBox(height: 40),
+
+              // Username field
+              _fieldLabel('Username'),
+              _textField(
+                controller: _usernameController,
+                hint: 'Enter your username',
+                icon: Icons.person_outline,
+              ),
+              const SizedBox(height: 20),
+
+              // Password field
+              _fieldLabel('Password'),
+              _passwordField(),
+              const SizedBox(height: 36),
+
+              // Login button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF006B3F),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text('Login',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'Use any username & password to login',
+                  style: TextStyle(fontSize: 12, color: Colors.black38),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87)),
+      );
+
+  Widget _textField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+          prefixIcon: Icon(icon, color: Colors.black45, size: 20),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _passwordField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Enter your password',
+          hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+          prefixIcon:
+              const Icon(Icons.lock_outline, color: Colors.black45, size: 20),
+          suffixIcon: GestureDetector(
+            onTap: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
+            child: Icon(
+              _obscurePassword
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              color: Colors.black45,
+              size: 20,
             ),
           ),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
