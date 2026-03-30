@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorite_provider.dart'; // 🛑 1. เพิ่ม Import Provider
 
 // สีพื้นหลังหนังสือ วนซ้ำแต่ละ card
 const List<Color> _bookBgColors = [
@@ -43,7 +44,7 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  bool isFavorite = false;
+  // 🛑 ลบตัวแปร bool isFavorite ทิ้ง เพราะเราจะไปใช้ข้อมูลจาก Provider แทน
 
   bool get _isAsset => widget.imageUrl.startsWith('assets/');
 
@@ -67,7 +68,9 @@ class _ProductCardState extends State<ProductCard> {
           if (loadingProgress == null) return child;
           return const Center(
             child: CircularProgressIndicator(
-                color: Color(0xFF00D13B), strokeWidth: 2),
+              color: Color(0xFF00D13B),
+              strokeWidth: 2,
+            ),
           );
         },
         errorBuilder: (context, error, stackTrace) =>
@@ -78,6 +81,9 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
+    // 🛑 ดึงข้อมูล Favorite ว่ามีเรื่องนี้อยู่ในรายการไหม
+    final isFav = FavoriteProviderWidget.of(context).isFavorite(widget.title);
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -129,7 +135,10 @@ class _ProductCardState extends State<ProductCard> {
             ),
             const Spacer(),
             const Divider(
-                color: Color(0xFFF5D6C6), thickness: 1.0, height: 15.0),
+              color: Color(0xFFF5D6C6),
+              thickness: 1.0,
+              height: 15.0,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -143,11 +152,19 @@ class _ProductCardState extends State<ProductCard> {
                 ),
                 Row(
                   children: [
+                    // 🛑 2. ปรับปุ่ม Favorite ให้ใช้ State จาก Provider
                     GestureDetector(
-                      onTap: () => setState(() => isFavorite = !isFavorite),
+                      onTap: () {
+                        FavoriteProviderWidget.of(context).toggleFavorite(
+                          title: widget.title,
+                          description: widget.description,
+                          price: widget.price,
+                          imageUrl: widget.imageUrl,
+                        );
+                      },
                       child: Icon(
-                        isFavorite ? Remix.heart_3_fill : Remix.heart_3_line,
-                        color: isFavorite
+                        isFav ? Remix.heart_3_fill : Remix.heart_3_line,
+                        color: isFav
                             ? Colors.red.withValues(alpha: 0.8)
                             : Colors.grey,
                         size: 20,
@@ -168,12 +185,16 @@ class _ProductCardState extends State<ProductCard> {
                             behavior: SnackBarBehavior.floating,
                             duration: const Duration(seconds: 2),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
                       },
-                      child: const Icon(Remix.add_circle_fill,
-                          color: Color(0xFF006B3F), size: 24),
+                      child: const Icon(
+                        Remix.add_circle_fill,
+                        color: Color(0xFF006B3F),
+                        size: 24,
+                      ),
                     ),
                   ],
                 ),
@@ -190,10 +211,7 @@ class _BookPlaceholder extends StatelessWidget {
   final Color bgColor;
   final Color bookColor;
 
-  const _BookPlaceholder({
-    required this.bgColor,
-    required this.bookColor,
-  });
+  const _BookPlaceholder({required this.bgColor, required this.bookColor});
 
   @override
   Widget build(BuildContext context) {
@@ -223,14 +241,18 @@ class _BookPainter extends CustomPainter {
       (bookColor.b * 255.0 * 0.7).round().clamp(0, 255),
     );
 
-    canvas.drawRect(Rect.fromLTWH(0, 0, spineW, size.height),
-        Paint()..color = spineColor);
     canvas.drawRect(
-        Rect.fromLTWH(spineW, 0, size.width - spineW, size.height),
-        Paint()..color = bookColor);
+      Rect.fromLTWH(0, 0, spineW, size.height),
+      Paint()..color = spineColor,
+    );
     canvas.drawRect(
-        Rect.fromLTWH(size.width - 5, size.height * 0.05, 5, size.height * 0.9),
-        Paint()..color = const Color(0xFFEEEEEE));
+      Rect.fromLTWH(spineW, 0, size.width - spineW, size.height),
+      Paint()..color = bookColor,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(size.width - 5, size.height * 0.05, 5, size.height * 0.9),
+      Paint()..color = const Color(0xFFEEEEEE),
+    );
 
     final linePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.35)
@@ -238,7 +260,10 @@ class _BookPainter extends CustomPainter {
     for (int i = 1; i <= 3; i++) {
       final y = size.height * (0.25 * i);
       canvas.drawLine(
-          Offset(spineW + 8, y), Offset(size.width - 10, y), linePaint);
+        Offset(spineW + 8, y),
+        Offset(size.width - 10, y),
+        linePaint,
+      );
     }
 
     canvas.drawPath(

@@ -3,19 +3,7 @@ import 'package:itds283_sec2_group7_code_mobile/screens/product_screen.dart';
 import 'package:remixicon/remixicon.dart';
 import 'home_screen.dart';
 import 'cart_screen.dart';
-
-class ProductScreen extends StatelessWidget {
-  const ProductScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Product Page'));
-}
-
-class UserScreen extends StatelessWidget {
-  const UserScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('User Page'));
-}
+import 'user_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -30,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const ProductScreen(),
-    const CartScreen(), // ← ใช้ CartScreen จาก cart_screen.dart
+    const CartScreen(),
     const UserScreen(),
   ];
 
