@@ -18,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const ProductScreen(),
-    const CartScreen(), // ← ใช้ CartScreen จาก cart_screen.dart
+    const CartScreen(),
     const UserScreen(),
   ];
 

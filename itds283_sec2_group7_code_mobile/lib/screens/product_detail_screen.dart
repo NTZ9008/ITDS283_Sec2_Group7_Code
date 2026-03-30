@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import '../routes/app_routes.dart';
+// 🛑 1. Import Provider เข้ามาใช้งาน
+import '../providers/cart_provider.dart';
+import '../providers/favorite_provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String title;
@@ -23,7 +26,7 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  bool isFavorite = false;
+  // 🛑 ลบตัวแปร bool isFavorite ทิ้ง เพราะเราจะใช้จาก Provider
 
   bool get _isAsset => widget.imageUrl.startsWith('assets/');
 
@@ -43,7 +46,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           if (loadingProgress == null) return child;
           return const Center(
             child: CircularProgressIndicator(
-                color: Color(0xFF00D13B), strokeWidth: 2),
+              color: Color(0xFF00D13B),
+              strokeWidth: 2,
+            ),
           );
         },
         errorBuilder: (context, error, stackTrace) => const _BookPlaceholder(),
@@ -81,7 +86,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: GestureDetector(
         onTap: () => Navigator.pop(context),
-        child: const Icon(Remix.arrow_left_s_line, size: 30, color: Colors.black87),
+        child: const Icon(
+          Remix.arrow_left_s_line,
+          size: 30,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -105,6 +114,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildTitleRow() {
+    // 🛑 ดึงสถานะจาก FavoriteProvider ว่าหนังสือเล่มนี้ถูกกดถูกใจไว้หรือยัง
+    final isFav = FavoriteProviderWidget.of(context).isFavorite(widget.title);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -121,7 +133,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => setState(() => isFavorite = !isFavorite),
+            onTap: () {
+              // 🛑 สลับสถานะการกดหัวใจผ่าน Provider
+              FavoriteProviderWidget.of(context).toggleFavorite(
+                title: widget.title,
+                description: widget.description,
+                price: widget.price,
+                imageUrl: widget.imageUrl,
+              );
+            },
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
@@ -129,8 +149,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isFavorite ? Remix.heart_3_fill : Remix.heart_3_line,
-                color: Colors.white,
+                isFav ? Remix.heart_3_fill : Remix.heart_3_line,
+                color: isFav
+                    ? Colors.redAccent
+                    : Colors.white, // เปลี่ยนสีเมื่อกด
                 size: 20,
               ),
             ),
@@ -197,22 +219,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(width: 16),
           Column(
             children: [
-              _buildButton('Add To Cart', onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Added "${widget.title}" to cart'),
-                  backgroundColor: const Color(0xFF00D13B),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              );
-            }),
+              _buildButton(
+                'Add To Cart',
+                onTap: () {
+                  // 🛑 เพิ่มสินค้าลงใน CartProvider
+                  CartProviderWidget.of(context).addItem(
+                    title: widget.title,
+                    price: widget.price,
+                    imageUrl: widget.imageUrl,
+                  );
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Added "${widget.title}" to cart'),
+                      backgroundColor: const Color(0xFF00D13B),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 12),
-              _buildButton('Buy Now', onTap: () {
-                Navigator.pushNamed(context, AppRoutes.checkout);
-              }),
+              _buildButton(
+                'Buy Now',
+                onTap: () {
+                  // 🛑 ส่งข้อมูลสินค้าเล่มนี้ตรงไปที่หน้า Checkout ทันที
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.checkout,
+                    arguments: {
+                      'items': [
+                        {
+                          'title': widget.title,
+                          'price': widget.price,
+                          'quantity': 1,
+                        },
+                      ],
+                      'subtotal': widget.price,
+                      'discount': 0.0,
+                      'total': widget.price,
+                    },
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -251,10 +303,7 @@ class _BookPlaceholder extends StatelessWidget {
     return Container(
       color: const Color(0xFFB2EEF4),
       child: Center(
-        child: CustomPaint(
-          size: const Size(120, 140),
-          painter: _BookPainter(),
-        ),
+        child: CustomPaint(size: const Size(120, 140), painter: _BookPainter()),
       ),
     );
   }
@@ -264,21 +313,28 @@ class _BookPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final spineW = size.width * 0.12;
-    canvas.drawRect(Rect.fromLTWH(0, 0, spineW, size.height),
-        Paint()..color = const Color(0xFF3A6BC4));
     canvas.drawRect(
-        Rect.fromLTWH(spineW, 0, size.width - spineW, size.height),
-        Paint()..color = const Color(0xFF5B9BD5));
+      Rect.fromLTWH(0, 0, spineW, size.height),
+      Paint()..color = const Color(0xFF3A6BC4),
+    );
     canvas.drawRect(
-        Rect.fromLTWH(size.width - 6, size.height * 0.05, 6, size.height * 0.9),
-        Paint()..color = const Color(0xFFEEEEEE));
+      Rect.fromLTWH(spineW, 0, size.width - spineW, size.height),
+      Paint()..color = const Color(0xFF5B9BD5),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(size.width - 6, size.height * 0.05, 6, size.height * 0.9),
+      Paint()..color = const Color(0xFFEEEEEE),
+    );
     final linePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.35)
       ..strokeWidth = 2;
     for (int i = 1; i <= 3; i++) {
       final y = size.height * (0.25 * i);
       canvas.drawLine(
-          Offset(spineW + 10, y), Offset(size.width - 12, y), linePaint);
+        Offset(spineW + 10, y),
+        Offset(size.width - 12, y),
+        linePaint,
+      );
     }
     canvas.drawPath(
       Path()
