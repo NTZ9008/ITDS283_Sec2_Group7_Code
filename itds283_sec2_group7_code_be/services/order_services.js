@@ -51,9 +51,7 @@ exports.checkout = async (userId, data) => {
       }
     });
 
-    // ด่านที่ 4: เสกหนังสือเข้าชั้นหนังสือส่วนตัว (Library) ให้อ่านได้เลย!
     for (const item of cart.items) {
-      // เช็คกันเหนียวเผื่อมีอยู่แล้ว
       const existing = await tx.libraryItem.findUnique({
         where: { userId_bookId: { userId: parseInt(userId), bookId: item.bookId } }
       });
@@ -65,18 +63,16 @@ exports.checkout = async (userId, data) => {
       }
     }
 
-    // ด่านที่ 5: ล้างตะกร้าให้สะอาดเอี่ยม
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
     return order;
   });
 };
 
-// 3. ดูประวัติการสั่งซื้อ
 exports.getOrderHistory = async (userId) => {
   return await prisma.order.findMany({
     where: { userId: parseInt(userId) },
     include: { items: { include: { book: true } } },
-    orderBy: { createdAt: 'desc' } // เรียงอันใหม่ล่าสุดไว้บน
+    orderBy: { createdAt: 'desc' }
   });
 };
