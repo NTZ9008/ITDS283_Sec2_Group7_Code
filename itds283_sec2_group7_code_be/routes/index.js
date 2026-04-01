@@ -7,7 +7,7 @@ const orderRoutes = require('./order_routes');
 const userRoutes = require('./user_routes');
 
 router.use('/auth', authRoutes);
-// router.use('/users', userRoutes);
+router.use('/users', userRoutes);
 // router.use('/books', bookRoutes);
 // router.use('/cart', cartRoutes);
 // router.use('/orders', orderRoutes);
