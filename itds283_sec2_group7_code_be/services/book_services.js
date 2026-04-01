@@ -45,6 +45,7 @@ exports.createBook = async (data, sellerId) => {
       description: data.description,
       price: parseFloat(data.price),
       imageUrl: data.imageUrl || 'https://via.placeholder.com/150',
+      pdfUrl: data.pdfUrl,
       sellerId: parseInt(sellerId),
     },
   });
@@ -64,6 +65,7 @@ exports.updateBook = async (id, data, sellerId) => {
       description: data.description,
       price: parseFloat(data.price),
       imageUrl: data.imageUrl,
+      pdfUrl: data.pdfUrl,
     },
   });
 };

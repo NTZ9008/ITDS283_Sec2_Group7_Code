@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const bookService = require('../services/book_services');
 
 const getAllBooks = async (req, res) => {
@@ -21,8 +23,7 @@ const getBookById = async (req, res) => {
 
 const getSellerBooks = async (req, res) => {
   try {
-    // const sellerId = req.user.id; 
-    const sellerId = 1;
+    const sellerId = 1; // 🟢 วิชามาร (แก้กลับเป็น req.user.id ทีหลัง)
     const books = await bookService.getSellerBooks(sellerId);
     res.status(200).json(books);
   } catch (error) {
@@ -32,13 +33,16 @@ const getSellerBooks = async (req, res) => {
 
 const createBook = async (req, res) => {
   try {
-    // const sellerId = req.user.id;
     const sellerId = 1;
-
     const bookData = { ...req.body };
-
-    if (req.file) {
-      bookData.imageUrl = `/uploads/${req.file.filename}`; 
+    
+    // 🟢 เช็คว่ามีรูปปกส่งมาไหม
+    if (req.files && req.files['image']) {
+      bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`; 
+    }
+    // 🟢 เช็คว่ามีไฟล์ PDF ส่งมาไหม
+    if (req.files && req.files['pdf']) {
+      bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`; 
     }
 
     const newBook = await bookService.createBook(bookData, sellerId);
@@ -51,13 +55,16 @@ const createBook = async (req, res) => {
 const updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    // const sellerId = req.user.id;
-    const sellerId = 1;
-
+    const sellerId = 1; // 🟢 วิชามาร 
     const bookData = { ...req.body };
-
-    if (req.file) {
-      bookData.imageUrl = `/uploads/${req.file.filename}`;
+    
+    // 🟢 ถ้ามีการอัปรูปปกใหม่
+    if (req.files && req.files['image']) {
+      bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`;
+    }
+    // 🟢 ถ้ามีการอัปไฟล์ PDF ใหม่
+    if (req.files && req.files['pdf']) {
+      bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`;
     }
 
     const updatedBook = await bookService.updateBook(bookId, bookData, sellerId);
@@ -70,11 +77,27 @@ const updateBook = async (req, res) => {
 const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    // const sellerId = req.user.id;
-    const sellerId = 1; // วิชามารชั่วคราว
+    const sellerId = 1; // 🟢 วิชามาร 
     
+    // ดึงข้อมูลออกมาก่อนเพื่อเอาที่อยู่ไฟล์
+    const book = await bookService.getBookById(bookId);
+    
+    // ลบใน Database
     await bookService.deleteBook(bookId, sellerId);
-    res.status(200).json({ message: "Book deleted successfully" });
+
+    // 🟢 ลบไฟล์รูปปกทิ้ง
+    if (book && book.imageUrl) {
+      const imgPath = path.join(__dirname, '..', book.imageUrl);
+      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath); 
+    }
+    
+    // 🟢 ลบไฟล์ PDF ทิ้งด้วย
+    if (book && book.pdfUrl) {
+      const pdfPath = path.join(__dirname, '..', book.pdfUrl);
+      if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath); 
+    }
+
+    res.status(200).json({ message: "Book and associated files deleted successfully" });
   } catch (error) {
     res.status(403).json({ message: error.message });
   }

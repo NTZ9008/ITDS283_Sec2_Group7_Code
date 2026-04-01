@@ -34,6 +34,7 @@ model Book {
   description String
   price       Float
   imageUrl    String
+  pdfUrl      String?
   createdAt   DateTime @default(now())
 
   sellerId    Int

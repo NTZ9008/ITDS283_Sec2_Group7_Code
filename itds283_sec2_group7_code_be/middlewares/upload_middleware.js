@@ -12,16 +12,15 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
+  const allowedTypes = /jpeg|jpg|png|webp|pdf/;
 
   const isValidExt = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-
   const isValidMime = allowedTypes.test(file.mimetype);
 
   if (isValidExt && isValidMime) {
     return cb(null, true);
   } else {
-    cb(new Error('อัปโหลดล้มเหลว: อนุญาตเฉพาะไฟล์รูปภาพ (.png, .jpg, .jpeg, .webp) เท่านั้น!'), false);
+    cb(new Error('อัปโหลดล้มเหลว: อนุญาตเฉพาะไฟล์รูปภาพ หรือ PDF เท่านั้น!'), false);
   }
 };
 
@@ -29,7 +28,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: 50 * 1024 * 1024
   }
 });
 
