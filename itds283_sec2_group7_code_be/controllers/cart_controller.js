@@ -25,29 +25,18 @@ const addToCart = async (req, res) => {
   }
 };
 
-const updateCartItem = async (req, res) => {
-  try {
-    const { cartItemId, quantity } = req.body; 
-    const updatedItem = await cartService.updateCartItem(cartItemId, quantity);
-    res.status(200).json({ message: "Cart item updated", item: updatedItem });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
 const removeFromCart = async (req, res) => {
   try {
     const cartItemId = req.params.id;
     await cartService.removeFromCart(cartItemId);
     res.status(200).json({ message: "Item removed from cart" });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Item doesn't exis in cart!" });
   }
 };
 
 module.exports = {
   getCart,
   addToCart,
-  updateCartItem,
   removeFromCart
 };
