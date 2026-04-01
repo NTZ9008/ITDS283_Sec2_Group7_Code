@@ -32,4 +32,21 @@ const upload = multer({
   }
 });
 
-module.exports = upload;
+const uploadFields = upload.fields([
+  { name: 'image', maxCount: 1 }, 
+  { name: 'pdf', maxCount: 1 }    
+]);
+
+const handleUploadError = (req, res, next) => {
+  uploadFields(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: `อัปโหลดล้มเหลว: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    next();
+  });
+};
+
+module.exports = handleUploadError;

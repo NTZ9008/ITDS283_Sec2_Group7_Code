@@ -23,7 +23,7 @@ const getBookById = async (req, res) => {
 
 const getSellerBooks = async (req, res) => {
   try {
-    const sellerId = 1; // 🟢 วิชามาร (แก้กลับเป็น req.user.id ทีหลัง)
+    const sellerId = 1;
     const books = await bookService.getSellerBooks(sellerId);
     res.status(200).json(books);
   } catch (error) {
@@ -35,12 +35,11 @@ const createBook = async (req, res) => {
   try {
     const sellerId = 1;
     const bookData = { ...req.body };
-    
-    // 🟢 เช็คว่ามีรูปปกส่งมาไหม
+
     if (req.files && req.files['image']) {
       bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`; 
     }
-    // 🟢 เช็คว่ามีไฟล์ PDF ส่งมาไหม
+
     if (req.files && req.files['pdf']) {
       bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`; 
     }
@@ -55,46 +54,60 @@ const createBook = async (req, res) => {
 const updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = 1; // 🟢 วิชามาร 
+    const sellerId = req.user?.id || 1; 
     const bookData = { ...req.body };
-    
-    // 🟢 ถ้ามีการอัปรูปปกใหม่
+    const oldBook = await bookService.getBookById(bookId);
+
     if (req.files && req.files['image']) {
       bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`;
+      if (oldBook.imageUrl && !oldBook.imageUrl.includes('via.placeholder.com')) {
+        const filename = oldBook.imageUrl.split('/').pop(); 
+        const oldImgPath = path.join(__dirname, '..', 'uploads', filename); 
+        
+        if (fs.existsSync(oldImgPath)) fs.unlinkSync(oldImgPath);
+      }
     }
-    // 🟢 ถ้ามีการอัปไฟล์ PDF ใหม่
+
     if (req.files && req.files['pdf']) {
       bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`;
+      
+      if (oldBook.pdfUrl) {
+        const filename = oldBook.pdfUrl.split('/').pop();
+        const oldPdfPath = path.join(__dirname, '..', 'uploads', filename);
+        
+        if (fs.existsSync(oldPdfPath)) fs.unlinkSync(oldPdfPath);
+      }
     }
 
     const updatedBook = await bookService.updateBook(bookId, bookData, sellerId);
     res.status(200).json({ message: "Book updated successfully", book: updatedBook });
   } catch (error) {
-    res.status(403).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
 const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = 1; // 🟢 วิชามาร 
-    
-    // ดึงข้อมูลออกมาก่อนเพื่อเอาที่อยู่ไฟล์
+    const sellerId = req.user?.id || 1;
     const book = await bookService.getBookById(bookId);
-    
-    // ลบใน Database
     await bookService.deleteBook(bookId, sellerId);
 
-    // 🟢 ลบไฟล์รูปปกทิ้ง
-    if (book && book.imageUrl) {
-      const imgPath = path.join(__dirname, '..', book.imageUrl);
-      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath); 
+    if (book && book.imageUrl && !book.imageUrl.includes('via.placeholder.com')) {
+      const filename = book.imageUrl.split('/').pop(); // ตัดเอามาแค่ชื่อไฟล์
+      const imgPath = path.join(__dirname, '..', 'uploads', filename); // ประกอบร่างใหม่ให้ชัวร์
+      if (fs.existsSync(imgPath)) {
+        fs.unlinkSync(imgPath); 
+      }
     }
-    
-    // 🟢 ลบไฟล์ PDF ทิ้งด้วย
+
     if (book && book.pdfUrl) {
-      const pdfPath = path.join(__dirname, '..', book.pdfUrl);
-      if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath); 
+      const filename = book.pdfUrl.split('/').pop();
+      const pdfPath = path.join(__dirname, '..', 'uploads', filename);
+      
+      if (fs.existsSync(pdfPath)) {
+        fs.unlinkSync(pdfPath); 
+      }
     }
 
     res.status(200).json({ message: "Book and associated files deleted successfully" });
