@@ -21,7 +21,8 @@ const getBookById = async (req, res) => {
 
 const getSellerBooks = async (req, res) => {
   try {
-    const sellerId = req.user.id; 
+    // const sellerId = req.user.id; 
+    const sellerId = 1;
     const books = await bookService.getSellerBooks(sellerId);
     res.status(200).json(books);
   } catch (error) {
@@ -31,8 +32,16 @@ const getSellerBooks = async (req, res) => {
 
 const createBook = async (req, res) => {
   try {
-    const sellerId = req.user.id;
-    const newBook = await bookService.createBook(req.body, sellerId);
+    // const sellerId = req.user.id;
+    const sellerId = 1;
+
+    const bookData = { ...req.body };
+
+    if (req.file) {
+      bookData.imageUrl = `/uploads/${req.file.filename}`; 
+    }
+
+    const newBook = await bookService.createBook(bookData, sellerId);
     res.status(201).json({ message: "Book created successfully", book: newBook });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -42,8 +51,16 @@ const createBook = async (req, res) => {
 const updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = req.user.id;
-    const updatedBook = await bookService.updateBook(bookId, req.body, sellerId);
+    // const sellerId = req.user.id;
+    const sellerId = 1;
+
+    const bookData = { ...req.body };
+
+    if (req.file) {
+      bookData.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedBook = await bookService.updateBook(bookId, bookData, sellerId);
     res.status(200).json({ message: "Book updated successfully", book: updatedBook });
   } catch (error) {
     res.status(403).json({ message: error.message });
@@ -53,7 +70,9 @@ const updateBook = async (req, res) => {
 const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = req.user.id;
+    // const sellerId = req.user.id;
+    const sellerId = 1; // วิชามารชั่วคราว
+    
     await bookService.deleteBook(bookId, sellerId);
     res.status(200).json({ message: "Book deleted successfully" });
   } catch (error) {
