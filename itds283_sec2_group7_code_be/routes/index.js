@@ -10,7 +10,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 // router.use('/books', bookRoutes);
 // router.use('/cart', cartRoutes);
-// router.use('/orders', orderRoutes);
+router.use('/orders', orderRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: '67-E Book API is running!' });
