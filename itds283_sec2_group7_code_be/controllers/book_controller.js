@@ -1,26 +1,64 @@
+const bookService = require('../services/book_services');
+
 const getAllBooks = async (req, res) => {
-  // TODO: ดึงรายการหนังสือทั้งหมด (ใช้โชว์หน้า Home, Search)
-  // ควรรองรับการ Filter ตามหมวดหมู่ (Category) และการ Search ชื่อ
+  try {
+    const books = await bookService.getAllBooks(req.query);
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 const getBookById = async (req, res) => {
-  // TODO: ดึงข้อมูลหนังสือ 1 เล่ม แบบละเอียด (ใช้สำหรับหน้า Product Detail)
+  try {
+    const bookId = req.params.id;
+    const book = await bookService.getBookById(bookId);
+    res.status(200).json(book);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
 };
 
 const getSellerBooks = async (req, res) => {
-  // TODO: ดึงรายการหนังสือที่ User คนนี้เป็นคนลงขาย (ใช้สำหรับหน้า My Products)
+  try {
+    const sellerId = req.user.id; 
+    const books = await bookService.getSellerBooks(sellerId);
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 const createBook = async (req, res) => {
-  // TODO: รับข้อมูลหนังสือใหม่จากหน้า Add Product และบันทึกลง Database
+  try {
+    const sellerId = req.user.id;
+    const newBook = await bookService.createBook(req.body, sellerId);
+    res.status(201).json({ message: "Book created successfully", book: newBook });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
 const updateBook = async (req, res) => {
-  // TODO: แก้ไขข้อมูลหนังสือเดิมจากหน้า Edit Product
+  try {
+    const bookId = req.params.id;
+    const sellerId = req.user.id;
+    const updatedBook = await bookService.updateBook(bookId, req.body, sellerId);
+    res.status(200).json({ message: "Book updated successfully", book: updatedBook });
+  } catch (error) {
+    res.status(403).json({ message: error.message });
+  }
 };
 
 const deleteBook = async (req, res) => {
-  // TODO: ลบหนังสือของตัวเอง (อาจจะแค่เปลี่ยน status เป็น inactive เพื่อไม่ให้กระทบคนที่ซื้อไปแล้ว)
+  try {
+    const bookId = req.params.id;
+    const sellerId = req.user.id;
+    await bookService.deleteBook(bookId, sellerId);
+    res.status(200).json({ message: "Book deleted successfully" });
+  } catch (error) {
+    res.status(403).json({ message: error.message });
+  }
 };
 
 module.exports = {
