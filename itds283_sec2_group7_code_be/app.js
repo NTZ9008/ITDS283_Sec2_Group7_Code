@@ -15,6 +15,11 @@ app.use('/api', routes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  if (err.name === 'MulterError') {
+    return res.status(400).json({ status: 'error', message: err.message });
+  }
+
   res.status(500).json({
     status: 'error',
     message: err.message || 'Internal Server Error',

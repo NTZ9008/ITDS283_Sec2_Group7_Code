@@ -11,7 +11,6 @@ const generateToken = (user) =>
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
-// ── Register ──
 const register = async ({ email, password, firstName, lastName, phone, dob }) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error('Email already in use');
@@ -38,12 +37,10 @@ const register = async ({ email, password, firstName, lastName, phone, dob }) =>
   return user;
 };
 
-// ── Login ──
 const login = async ({ email, password }) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error('Invalid email or password');
 
-  // กรณี user สมัครผ่าน Google ไม่มี password
   if (!user.password) throw new Error('This account uses Google Sign-in');
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -63,18 +60,14 @@ const login = async ({ email, password }) => {
   };
 };
 
-// ── Google Login ──
-// Flutter ส่ง googleId + email + firstName + lastName มาให้
 const googleLogin = async ({ googleId, email, firstName, lastName }) => {
   let user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    // สร้าง user ใหม่
     user = await prisma.user.create({
       data: { email, firstName, lastName, googleId, password: '' },
     });
   } else if (!user.googleId) {
-    // มี account อยู่แล้วแต่ยังไม่ได้ link Google
     user = await prisma.user.update({
       where: { email },
       data: { googleId },
@@ -95,7 +88,6 @@ const googleLogin = async ({ googleId, email, firstName, lastName }) => {
   };
 };
 
-// ── Get profile ──
 const getProfile = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
