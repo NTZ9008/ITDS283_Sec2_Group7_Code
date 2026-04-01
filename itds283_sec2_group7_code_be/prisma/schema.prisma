@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String?  
+  firstName   String?
+  lastName    String?
+  phone       String?
+  dob         String?
+  role        Role     @default(BUYER) 
+  createdAt   DateTime @default(now())
+
+  books       Book[]        @relation("SellerBooks") 
+  cart        Cart?         
+  favorites   Favorite[]    
+  orders      Order[]       
+  library     LibraryItem[] 
+}
+
+model Book {
+  id          Int      @id @default(autoincrement())
+  title       String
+  author      String
+  category    String
+  description String
+  price       Float
+  imageUrl    String
+  createdAt   DateTime @default(now())
+
+  sellerId    Int
+  seller      User     @relation("SellerBooks", fields: [sellerId], references: [id])
+
+  cartItems   CartItem[]
+  favorites   Favorite[]
+  orderItems  OrderItem[]
+  library     LibraryItem[]
+}
+
+model Favorite {
+  userId      Int
+  bookId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  book        Book     @relation(fields: [bookId], references: [id])
+
+  @@id([userId, bookId]) 
+}
+
+model Cart {
+  id          Int        @id @default(autoincrement())
+  userId      Int        @unique
+  user        User       @relation(fields: [userId], references: [id])
+  items       CartItem[]
+}
+
+model CartItem {
+  id          Int      @id @default(autoincrement())
+  cartId      Int
+  bookId      Int
+  quantity    Int      @default(1)
+  
+  cart        Cart     @relation(fields: [cartId], references: [id])
+  book        Book     @relation(fields: [bookId], references: [id])
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  totalAmount   Float
+  discount      Float    @default(0)
+  status        String   @default("COMPLETED") 
+  
+  fullName      String
+  phone         String
+  province      String
+  city          String
+  address       String
+  postalCode    String
+  paymentMethod String   @default("QR")
+
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  bookId      Int
+  quantity    Int
+  price       Float    
+
+  order       Order    @relation(fields: [orderId], references: [id])
+  book        Book     @relation(fields: [bookId], references: [id])
+}
+
+model LibraryItem {
+  userId          Int
+  bookId          Int
+  isDownloaded    Boolean  @default(false)
+  currentPage     Int      @default(1)
+  bookmarkedPages Int[]    
+
+  user            User     @relation(fields: [userId], references: [id])
+  book            Book     @relation(fields: [bookId], references: [id])
+
+  @@id([userId, bookId])
+}
+
+model PromoCode {
+  id              Int      @id @default(autoincrement())
+  code            String   @unique
+  discountPercent Float    
+  isActive        Boolean  @default(true)
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
