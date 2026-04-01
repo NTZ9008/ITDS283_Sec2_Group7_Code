@@ -68,7 +68,7 @@ const googleLogin = async (req, res) => {
   }
 };
 
-// GET /api/auth/me  (ต้องผ่าน authenticate middleware)
+// GET /api/auth/me
 const getMe = async (req, res) => {
   try {
     const user = await authService.getProfile(req.user.id);

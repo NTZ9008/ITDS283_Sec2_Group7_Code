@@ -2,8 +2,6 @@ const authMiddleware = (req, res, next) => {
   next();
 };
 
-// ── ตรวจสอบ Role ──
-// ใช้งาน: authorize('ADMIN') หรือ authorize('ADMIN', 'SELLER')
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
