@@ -51,17 +51,22 @@ class UserScreen extends StatelessWidget {
                             builder: (_) => const LibraryScreen()),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    _sectionLabel('Seller Zone'),
-                    const SizedBox(height: 10),
-                    _buildMenuItem(
-                      label: 'My Products',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const MyProductsScreen()),
+                    
+                    // เพิ่มเงื่อนไขตรวจสอบว่า Login แล้ว และ Role เป็น Seller เท่านั้น
+                    if (auth.isLoggedIn && auth.role == 'seller') ...[
+                      const SizedBox(height: 24),
+                      _sectionLabel('Seller Zone'),
+                      const SizedBox(height: 10),
+                      _buildMenuItem(
+                        label: 'My Products',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MyProductsScreen()),
+                        ),
                       ),
-                    ),
+                    ],
+
                     const SizedBox(height: 32),
                   ],
                 ),

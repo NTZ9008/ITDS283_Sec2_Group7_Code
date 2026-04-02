@@ -49,11 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final token = data['token'];
         final user = data['user'];
         final fullName = "${user['firstName']} ${user['lastName']}";
+        final role = (user['role'] ?? 'buyer').toString().toLowerCase();
 
         if (mounted) {
           AuthProviderWidget.of(
             context,
-          ).login(fullName, user['email'], token: token);
+          ).login(fullName, user['email'], token: token, role: role);
           Navigator.pushReplacementNamed(context, AppRoutes.main);
         }
       } else {
@@ -70,10 +71,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       _showLoading();
 
-      // 1. ล็อกอินผ่าน Google (ผ่าน Firebase เดิม)
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
-        if (mounted) Navigator.pop(context); // ปิด Loading ถ้ากดยกเลิก
+        if (mounted) Navigator.pop(context);
         return;
       }
 
@@ -84,13 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
         idToken: googleAuth.idToken,
       );
 
-      // ได้ข้อมูล User จาก Firebase
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
       final User? firebaseUser = userCredential.user;
 
       if (firebaseUser != null) {
-        // 2. หั่นชื่อ (Display Name) ออกเป็น First Name กับ Last Name
         final displayName = firebaseUser.displayName ?? "Google User";
         final nameParts = displayName.split(" ");
         final firstName = nameParts.isNotEmpty ? nameParts[0] : "Google";
@@ -98,12 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ? nameParts.sublist(1).join(" ")
             : "User";
 
-        // 3. ยิง API ไปหา Backend ของเรา!
         final response = await http.post(
           Uri.parse(googleApiUrl),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            "googleId": firebaseUser.uid, // ใช้ UID ของ Firebase เป็น googleId
+            "googleId": firebaseUser.uid,
             "email": firebaseUser.email ?? "",
             "firstName": firstName,
             "lastName": lastName,
@@ -113,21 +110,24 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = jsonDecode(response.body);
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // 4. ได้รับ Token จาก Backend สำเร็จ! นำไปบันทึกใน Provider
           final token = data['token'];
 
+          final userObj = data['user'] ?? {};
+          final role = (userObj['role'] ?? data['role'] ?? 'buyer')
+              .toString()
+              .toLowerCase();
+
           if (mounted) {
-            AuthProviderWidget.of(
-              context,
-            ).login(displayName, firebaseUser.email ?? '', token: token);
-            Navigator.pop(context); // ปิด Loading
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.main,
-            ); // พาไปหน้าหลัก
+            AuthProviderWidget.of(context).login(
+              displayName,
+              firebaseUser.email ?? '',
+              token: token,
+              role: role, // ส่ง Role ไปเก็บใน Provider
+            );
+            Navigator.pop(context);
+            Navigator.pushReplacementNamed(context, AppRoutes.main);
           }
         } else {
-          // ถ้า Backend ตอบ Error กลับมา
           if (mounted) Navigator.pop(context);
           _showError(data['message'] ?? 'Backend Google Login failed');
         }

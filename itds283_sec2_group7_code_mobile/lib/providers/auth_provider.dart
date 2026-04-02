@@ -6,11 +6,13 @@ class AuthProvider extends ChangeNotifier {
   String _username = 'Guest';
   String _email = '';
   String? _token;
+  String _role = 'buyer';
 
   bool get isLoggedIn => _isLoggedIn;
   String get username => _username;
   String get email => _email;
   String? get token => _token;
+  String get role => _role;
 
   AuthProvider() {
     _initAuthState();
@@ -27,16 +29,18 @@ class AuthProvider extends ChangeNotifier {
         _username = 'Guest';
         _email = '';
         _token = null;
+        _role = 'buyer';
       }
       notifyListeners();
     });
   }
 
-  void login(String name, String mail, {String? token}) {
+  void login(String name, String mail, {String? token, String role = 'buyer'}) {
     _isLoggedIn = true;
     _username = name;
     _email = mail;
     _token = token;
+    _role = role;
     notifyListeners();
   }
 
@@ -47,6 +51,7 @@ class AuthProvider extends ChangeNotifier {
     _username = 'Guest';
     _email = '';
     _token = null;
+    _role = 'buyer';
     notifyListeners();
   }
 }
