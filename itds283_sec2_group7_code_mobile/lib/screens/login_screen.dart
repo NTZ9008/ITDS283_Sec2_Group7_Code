@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
 
@@ -17,6 +19,50 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isObscure = true;
+  bool _isLoading = false;
+
+  final String apiUrl = "https://ebookapi.arlifzs.site/api/auth/login";
+
+  Future<void> _loginWithBackend() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter email and password');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final token = data['token'];
+        final user = data['user'];
+        final fullName = "${user['firstName']} ${user['lastName']}";
+
+        if (mounted) {
+          AuthProviderWidget.of(
+            context,
+          ).login(fullName, user['email'], token: token);
+          Navigator.pushReplacementNamed(context, AppRoutes.main);
+        }
+      } else {
+        _showError(data['message'] ?? 'Login failed');
+      }
+    } catch (e) {
+      _showError('Network error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _signInWithGoogle() async {
     try {
@@ -69,17 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _showBackendAlert() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          "ระบบ Login ปกติกำลังรอเชื่อม Backend กรุณาใช้ Google Login ชั่วคราวครับ",
-        ),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 25),
 
-                    // ช่อง Email
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -142,7 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 15),
 
-                    // ช่อง Password
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -176,27 +209,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 25),
 
-                    // ปุ่ม Log In ธรรมดา
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _showBackendAlert,
+                        onPressed: _isLoading ? null : _loginWithBackend,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2B58F6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          "Log In",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Log In",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // เส้นแบ่ง Or login with
                     Row(
                       children: const [
                         Expanded(child: Divider(color: Colors.black26)),
@@ -215,7 +258,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ปุ่ม Google
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -236,7 +278,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ปุ่มไปหน้า Sign Up
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
