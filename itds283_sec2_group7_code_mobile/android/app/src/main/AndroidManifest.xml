@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="itds283_sec2_group7_code_mobile"
+        android:label="67 Ebook"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
