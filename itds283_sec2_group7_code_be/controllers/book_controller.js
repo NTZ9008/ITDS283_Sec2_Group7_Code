@@ -23,7 +23,7 @@ const getBookById = async (req, res) => {
 
 const getSellerBooks = async (req, res) => {
   try {
-    const sellerId = 1;
+    const sellerId = req.user.id;
     const books = await bookService.getSellerBooks(sellerId);
     res.status(200).json(books);
   } catch (error) {
@@ -33,7 +33,7 @@ const getSellerBooks = async (req, res) => {
 
 const createBook = async (req, res) => {
   try {
-    const sellerId = 1;
+    const sellerId = req.user.id;
     const bookData = { ...req.body };
 
     if (req.files && req.files['image']) {
@@ -54,7 +54,7 @@ const createBook = async (req, res) => {
 const updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = req.user?.id || 1; 
+    const sellerId = req.user.id; 
     const bookData = { ...req.body };
     const oldBook = await bookService.getBookById(bookId);
 
@@ -89,7 +89,7 @@ const updateBook = async (req, res) => {
 const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = req.user?.id || 1;
+    const sellerId = 1;
     const book = await bookService.getBookById(bookId);
     await bookService.deleteBook(bookId, sellerId);
 
