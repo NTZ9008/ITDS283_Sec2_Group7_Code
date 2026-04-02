@@ -5,10 +5,12 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoggedIn = false;
   String _username = 'Guest';
   String _email = '';
+  String? _token;
 
   bool get isLoggedIn => _isLoggedIn;
   String get username => _username;
   String get email => _email;
+  String? get token => _token;
 
   AuthProvider() {
     _initAuthState();
@@ -24,25 +26,27 @@ class AuthProvider extends ChangeNotifier {
         _isLoggedIn = false;
         _username = 'Guest';
         _email = '';
+        _token = null;
       }
       notifyListeners();
     });
   }
 
-  void login(String name, String mail) {
+  void login(String name, String mail, {String? token}) {
     _isLoggedIn = true;
     _username = name;
     _email = mail;
+    _token = token;
     notifyListeners();
   }
 
-  // ฟังก์ชันออกจากระบบ
   Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
 
     _isLoggedIn = false;
     _username = 'Guest';
     _email = '';
+    _token = null;
     notifyListeners();
   }
 }
