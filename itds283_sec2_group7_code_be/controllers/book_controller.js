@@ -89,7 +89,7 @@ const updateBook = async (req, res) => {
 const deleteBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const sellerId = 1;
+    const sellerId = req.user.id;
     const book = await bookService.getBookById(bookId);
     await bookService.deleteBook(bookId, sellerId);
 
