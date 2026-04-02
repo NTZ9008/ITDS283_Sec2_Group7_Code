@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -16,10 +18,81 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isLoading = false;
+
+  final String apiUrl = "https://ebookapi.arlifzs.site/api/auth/register";
+
+  Future<void> _register() async {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final email = _emailController.text.trim();
+    final dob = _dobController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty ||
+        password.isEmpty ||
+        firstName.isEmpty ||
+        lastName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'firstName': firstName,
+          'lastName': lastName,
+          'email': email,
+          'dob': dob,
+          'phone': phone,
+          'password': password,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration Successful! Please login.'),
+            backgroundColor: Color(0xFF00D13B),
+          ),
+        );
+        if (mounted) Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Registration failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Network error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1ECA5A), 
+      backgroundColor: const Color(0xFF1ECA5A),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -28,7 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Container(
                 padding: const EdgeInsets.all(25.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB5E4BE), 
+                  color: const Color(0xFFB5E4BE),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -50,23 +123,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 25),
 
-                    // ช่อง First Name
                     _buildTextField(_firstNameController, 'First Name'),
-                    
-                    // ช่อง Last Name
                     _buildTextField(_lastNameController, 'Last Name'),
-                    
-                    // ช่อง Email
                     _buildTextField(_emailController, 'Email Address'),
-                    
-                    // ช่อง วันเกิด (Date of Birth)
                     _buildTextField(
                       _dobController,
                       'Date of Birth (DD/MM/YYYY)',
                       icon: Icons.calendar_today_outlined,
                     ),
 
-                    // ช่อง เบอร์โทรศัพท์ (🛑 แก้ไขใหม่หมด เหลือแค่เบอร์ไทย 10 หลัก)
                     Container(
                       margin: const EdgeInsets.only(bottom: 15),
                       decoration: BoxDecoration(
@@ -75,22 +140,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       child: TextField(
                         controller: _phoneController,
-                        keyboardType: TextInputType.phone, 
-                        // 🛑 จำกัดให้กรอกเฉพาะตัวเลขและไม่เกิน 10 ตัว
+                        keyboardType: TextInputType.phone,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly, 
-                          LengthLimitingTextInputFormatter(10), 
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
                         ],
                         decoration: const InputDecoration(
                           hintText: 'Phone Number (e.g., 0xxxxxxxxx)',
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                          suffixIcon: Icon(Icons.phone_iphone, color: Colors.black26, size: 20),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 15,
+                          ),
+                          suffixIcon: Icon(
+                            Icons.phone_iphone,
+                            color: Colors.black26,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
 
-                    // ช่อง Password
                     _buildTextField(
                       _passwordController,
                       'Password',
@@ -100,30 +170,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     const SizedBox(height: 10),
 
-                    // ปุ่ม Register 
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: ใส่ Logic สมัครสมาชิกตรงนี้
-                          print("กด Register!");
-                        },
+                        onPressed: _isLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2B58F6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          "Register",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Register",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // ปุ่มย้อนกลับไปหน้า Login
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -133,7 +210,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.pop(context); // 🛑 ย้อนกลับหน้าเดิม
+                            Navigator.pop(context);
                           },
                           child: const Text(
                             "Login",
@@ -155,8 +232,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // Widget ช่วยสร้างช่องกรอกข้อมูล
-  Widget _buildTextField(TextEditingController controller, String hint, {bool isPassword = false, IconData? icon}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    bool isPassword = false,
+    IconData? icon,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
@@ -169,8 +250,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         decoration: InputDecoration(
           hintText: hint,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-          suffixIcon: icon != null ? Icon(icon, color: Colors.black26, size: 20) : null,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 15,
+          ),
+          suffixIcon: icon != null
+              ? Icon(icon, color: Colors.black26, size: 20)
+              : null,
         ),
       ),
     );
