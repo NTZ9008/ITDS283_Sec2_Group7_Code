@@ -16,6 +16,7 @@ model User {
   lastName    String?
   phone       String?
   dob         String?
+  googleId  String?  @unique
   role        Role     @default(BUYER) 
   createdAt   DateTime @default(now())
 
