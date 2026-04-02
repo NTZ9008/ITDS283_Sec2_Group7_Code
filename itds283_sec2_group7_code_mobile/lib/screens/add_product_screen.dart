@@ -14,6 +14,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _describeController = TextEditingController();
   final _priceController = TextEditingController();
   String? _selectedCategory;
+  String? _pdfFileName;
 
   final List<String> _categories = [
     'Finance', 'Math', 'Science', 'English', 'Bio', 'Chemi', 'Physics'
@@ -36,6 +37,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a product name')),
+      );
+      return;
+    }
+
+    if (_pdfFileName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a PDF file')),
       );
       return;
     }
@@ -67,6 +75,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     _buildHeader(context),
                     const SizedBox(height: 20),
                     _buildImagePicker(),
+                    const SizedBox(height: 16),
+                    _buildPdfPicker(),
                     const SizedBox(height: 24),
                     _fieldLabel('Product Name'),
                     _textField(_nameController, ''),
@@ -88,6 +98,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
             ),
             _buildAddButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPdfPicker() {
+    return GestureDetector(
+      onTap: () {
+        // TODO: เรียกใช้งาน FilePicker ของจริงตรงนี้
+        setState(() {
+          _pdfFileName = 'my_ebook_file.pdf'; // สมมติว่าเลือกไฟล์แล้ว
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.picture_as_pdf_rounded, 
+              color: _pdfFileName == null ? Colors.black38 : const Color(0xFF006B3F),
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _pdfFileName ?? 'Upload PDF File',
+              style: TextStyle(
+                fontSize: 14, 
+                color: _pdfFileName == null ? Colors.black54 : const Color(0xFF006B3F),
+                fontWeight: _pdfFileName == null ? FontWeight.normal : FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
