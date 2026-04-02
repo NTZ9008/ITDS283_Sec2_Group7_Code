@@ -21,11 +21,10 @@ class _CartScreenState extends State<CartScreen> {
     super.dispose();
   }
 
-  // คำนวณราคาย่อยจาก Provider
   double _calculateSubtotal(CartProvider cart) {
     return cart.items
         .where((item) => item.selected)
-        .fold(0, (sum, item) => sum + (item.price * item.quantity));
+        .fold(0, (sum, item) => sum + item.price);
   }
 
   double _calculateDiscount(double subtotal) {
@@ -38,7 +37,6 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🛑 ดึงข้อมูล Cart จาก Provider
     final cartProvider = CartProviderWidget.of(context);
     final items = cartProvider.items;
 
@@ -151,7 +149,6 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     const SizedBox(width: 10),
 
-                    // โชว์รูปภาพจริงแทน Icon ชั่วคราว
                     Container(
                       width: 50,
                       height: 50,
@@ -183,6 +180,8 @@ class _CartScreenState extends State<CartScreen> {
                               fontSize: 14,
                               color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 5),
                           Text(
@@ -196,64 +195,11 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
 
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                if (item.quantity > 1) {
-                                  item.quantity--;
-                                } else {
-                                  cart.removeItem(
-                                    item,
-                                  ); // 🛑 ลบไอเทมผ่าน Provider
-                                }
-                              });
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Icon(
-                                Remix.subtract_line,
-                                size: 16,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '${item.quantity}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                item.quantity++;
-                              });
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Icon(
-                                Remix.add_line,
-                                size: 16,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Remix.delete_bin_line, color: Colors.redAccent, size: 20),
+                      onPressed: () {
+                        cart.removeItem(item);
+                      },
                     ),
                   ],
                 ),
@@ -266,7 +212,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildSummaryContainer(double subtotal, double discount) {
-    // โค้ดส่วนนี้เหมือนเดิมของคุณทั้งหมดครับ แค่รับตัวแปรมาจากด้านบน
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -288,10 +233,11 @@ class _CartScreenState extends State<CartScreen> {
                   child: TextField(
                     controller: _promoController,
                     onChanged: (value) {
-                      if (_isPromoApplied)
+                      if (_isPromoApplied) {
                         setState(() {
                           _isPromoApplied = false;
                         });
+                      }
                     },
                     decoration: const InputDecoration(
                       hintText: 'Enter promo code',
@@ -451,7 +397,7 @@ class _CartScreenState extends State<CartScreen> {
                             backgroundColor: Colors.orange,
                           ),
                         );
-                        return; // หยุดการทำงาน
+                        return; 
                       }
 
                       final selectedItems = items

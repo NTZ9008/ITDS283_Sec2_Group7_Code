@@ -15,9 +15,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late final TextEditingController _describeController;
   late final TextEditingController _priceController;
   String? _selectedCategory;
+  String? _pdfFileName;
 
   final List<String> _categories = [
-    'Finance', 'Math', 'Science', 'English', 'Bio', 'Chemi', 'Physics'
+    'Finance',
+    'Math',
+    'Science',
+    'English',
+    'Bio',
+    'Chemi',
+    'Physics',
   ];
 
   @override
@@ -27,10 +34,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _nameController = TextEditingController(text: p.title);
     _authorController = TextEditingController(text: p.author);
     _describeController = TextEditingController(text: p.description);
-    _priceController =
-        TextEditingController(text: p.price.toStringAsFixed(2));
-    _selectedCategory =
-        _categories.contains(p.category) ? p.category : null;
+    _priceController = TextEditingController(text: p.price.toStringAsFixed(2));
+    _selectedCategory = _categories.contains(p.category) ? p.category : null;
   }
 
   @override
@@ -79,6 +84,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     _buildHeader(context),
                     const SizedBox(height: 20),
                     _buildImagePicker(),
+                    const SizedBox(height: 16),
+                    _buildPdfPicker(),
                     const SizedBox(height: 24),
                     _fieldLabel('Product Name'),
                     _textField(_nameController),
@@ -106,6 +113,51 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
   }
 
+  Widget _buildPdfPicker() {
+    return GestureDetector(
+      onTap: () {
+        // TODO: เรียกใช้งาน FilePicker ของจริงตรงนี้
+        setState(() {
+          _pdfFileName = 'updated_ebook_file.pdf'; // สมมติว่าเลือกไฟล์ใหม่แล้ว
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.upload_file_rounded,
+              color: _pdfFileName == null
+                  ? Colors.black38
+                  : const Color(0xFF006B3F),
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _pdfFileName ?? 'Update PDF File (Optional)',
+              style: TextStyle(
+                fontSize: 14,
+                color: _pdfFileName == null
+                    ? Colors.black54
+                    : const Color(0xFF006B3F),
+                fontWeight: _pdfFileName == null
+                    ? FontWeight.normal
+                    : FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 4),
@@ -114,8 +166,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios_new,
-                size: 18, color: Colors.black87),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
@@ -143,10 +198,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
         child: widget.product.imageUrl.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(widget.product.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.add, size: 36, color: Colors.black38)),
+                child: Image.network(
+                  widget.product.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.add, size: 36, color: Colors.black38),
+                ),
               )
             : const Icon(Icons.add, size: 36, color: Colors.black38),
       ),
@@ -154,10 +211,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Widget _fieldLabel(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(text,
-            style: const TextStyle(fontSize: 14, color: Colors.black87)),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 14, color: Colors.black87),
+    ),
+  );
 
   Widget _textField(TextEditingController controller) {
     return Container(
@@ -170,8 +229,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         style: const TextStyle(fontSize: 14),
         decoration: const InputDecoration(
           border: InputBorder.none,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         ),
       ),
     );
@@ -189,8 +247,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         style: const TextStyle(fontSize: 14),
         decoration: const InputDecoration(
           border: InputBorder.none,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         ),
       ),
     );
@@ -210,8 +267,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
           style: const TextStyle(fontSize: 14),
           decoration: const InputDecoration(
             border: InputBorder.none,
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           ),
         ),
       ),
@@ -229,12 +285,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
         child: DropdownButton<String>(
           value: _selectedCategory,
           isExpanded: true,
-          hint: const Text('Select Category',
-              style: TextStyle(fontSize: 14, color: Colors.black54)),
+          hint: const Text(
+            'Select Category',
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
           items: _categories
-              .map((e) => DropdownMenuItem(
+              .map(
+                (e) => DropdownMenuItem(
                   value: e,
-                  child: Text(e, style: const TextStyle(fontSize: 14))))
+                  child: Text(e, style: const TextStyle(fontSize: 14)),
+                ),
+              )
               .toList(),
           onChanged: (v) => setState(() => _selectedCategory = v),
         ),
@@ -255,11 +316,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30)),
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
-          child: const Text('Edit',
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: const Text(
+            'Edit',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );

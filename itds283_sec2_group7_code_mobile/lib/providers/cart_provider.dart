@@ -4,7 +4,7 @@ class CartItem {
   final String title;
   final double price;
   final String imageUrl;
-  int quantity;
+  final int quantity;
   bool selected;
 
   CartItem({
@@ -21,15 +21,18 @@ class CartProvider extends ChangeNotifier {
 
   List<CartItem> get items => _items;
 
-  void addItem({required String title, required double price, required String imageUrl}) {
+  void addItem({
+    required String title,
+    required double price,
+    required String imageUrl,
+  }) {
     var existingItem = _items.where((item) => item.title == title).firstOrNull;
-    
-    if (existingItem != null) {
-      existingItem.quantity++;
-    } else {
-      _items.add(CartItem(title: title, price: price, imageUrl: imageUrl)); 
+
+    // 🟢 ถ้ายังไม่มีในตะกร้า ถึงจะยอมให้เพิ่ม (ถ้ามีแล้วจะผ่านไปเลย ไม่บวกเพิ่ม)
+    if (existingItem == null) {
+      _items.add(CartItem(title: title, price: price, imageUrl: imageUrl));
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void removeItem(CartItem item) {
@@ -46,6 +49,8 @@ class CartProviderWidget extends InheritedNotifier<CartProvider> {
   }) : super(notifier: notifier);
 
   static CartProvider of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<CartProviderWidget>()!.notifier!;
+    return context
+        .dependOnInheritedWidgetOfExactType<CartProviderWidget>()!
+        .notifier!;
   }
 }

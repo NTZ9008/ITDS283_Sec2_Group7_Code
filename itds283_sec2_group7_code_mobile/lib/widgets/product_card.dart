@@ -5,7 +5,6 @@ import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/auth_provider.dart';
 
-// สีพื้นหลังหนังสือ วนซ้ำแต่ละ card
 const List<Color> _bookBgColors = [
   Color(0xFFB2EEF4), // ฟ้า
   Color(0xFFFFCDD2), // ชมพู
@@ -45,8 +44,6 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  // 🛑 ลบตัวแปร bool isFavorite ทิ้ง เพราะเราจะไปใช้ข้อมูลจาก Provider แทน
-
   bool get _isAsset => widget.imageUrl.startsWith('assets/');
 
   Color get _bgColor => _bookBgColors[widget.index % _bookBgColors.length];
@@ -56,7 +53,7 @@ class _ProductCardState extends State<ProductCard> {
     if (_isAsset) {
       return Image.asset(
         widget.imageUrl,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) =>
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
@@ -64,7 +61,7 @@ class _ProductCardState extends State<ProductCard> {
       return Image.network(
         widget.imageUrl,
         key: ValueKey(widget.imageUrl),
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return const Center(
@@ -82,7 +79,6 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    // 🛑 ดึงข้อมูล Favorite ว่ามีเรื่องนี้อยู่ในรายการไหม
     final isFav = FavoriteProviderWidget.of(context).isFavorite(widget.title);
 
     return GestureDetector(
@@ -100,24 +96,23 @@ class _ProductCardState extends State<ProductCard> {
         );
       },
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.zero,
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              height: 180.0,
-              decoration: BoxDecoration(
-                color: _bgColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: _buildImage(),
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _bgColor,
+                  borderRadius: BorderRadius.zero,
+                ),
+                child: ClipRect(child: _buildImage()),
               ),
             ),
             const SizedBox(height: 10),
@@ -153,10 +148,8 @@ class _ProductCardState extends State<ProductCard> {
                 ),
                 Row(
                   children: [
-                    // 🛑 2. ปรับปุ่ม Favorite ให้ใช้ State จาก Provider
                     GestureDetector(
                       onTap: () {
-                        // 🛑 2. เช็ค Auth ก่อนกด Favorite
                         if (!AuthProviderWidget.of(context).isLoggedIn) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -196,7 +189,7 @@ class _ProductCardState extends State<ProductCard> {
                             behavior: SnackBarBehavior.floating,
                             duration: const Duration(seconds: 2),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.zero,
                             ),
                           ),
                         );

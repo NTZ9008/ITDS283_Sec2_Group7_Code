@@ -12,6 +12,7 @@ class _ProductScreenState extends State<ProductScreen> {
   int _selectedCategoryIndex = 0;
 
   final List<String> categories = [
+    'All', 
     'Finance',
     'Math',
     'Science',
@@ -24,30 +25,34 @@ class _ProductScreenState extends State<ProductScreen> {
   final List<Map<String, dynamic>> mockProducts = const [
     {
       'id': 1,
-      'title': 'A ',
+      'title': 'Finance Basics',
+      'category': 'Finance',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
       'price': 120.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
       'id': 2,
-      'title': 'Aaaaa Aaaa',
+      'title': 'Math for Kids',
+      'category': 'Math',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 150.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
       'id': 3,
-      'title': 'Aaaaa Aaaa',
+      'title': 'Science World',
+      'category': 'Science',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 200.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
     {
       'id': 4,
-      'title': 'Aaaaa Aaaa',
+      'title': 'Advanced Finance',
+      'category': 'Finance',
       'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
+      'price': 320.00,
       'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
     },
   ];
@@ -139,6 +144,20 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Widget _buildProductGrid() {
+    final selectedCategory = categories[_selectedCategoryIndex];
+    final filteredProducts = selectedCategory == 'All'
+        ? mockProducts
+        : mockProducts.where((p) => p['category'] == selectedCategory).toList();
+
+    if (filteredProducts.isEmpty) {
+      return const Center(
+        child: Text(
+          'No books in this category.',
+          style: TextStyle(color: Colors.black54, fontSize: 16),
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -147,9 +166,9 @@ class _ProductScreenState extends State<ProductScreen> {
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
       ),
-      itemCount: mockProducts.length,
+      itemCount: filteredProducts.length,
       itemBuilder: (context, index) {
-        final product = mockProducts[index];
+        final product = filteredProducts[index];
         return ProductCard(
           title: product['title'] ?? '',
           description: product['description'] ?? '',
