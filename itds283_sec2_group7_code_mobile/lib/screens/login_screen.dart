@@ -52,10 +52,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final role = (user['role'] ?? 'buyer').toString().toLowerCase();
 
         if (mounted) {
-          AuthProviderWidget.of(
+          // 🛑 เพิ่ม await ตรงนี้
+          await AuthProviderWidget.of(
             context,
           ).login(fullName, user['email'], token: token, role: role);
-          Navigator.pushReplacementNamed(context, AppRoutes.main);
+          
+          if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.main);
         }
       } else {
         _showError(data['message'] ?? 'Login failed');
@@ -118,14 +120,18 @@ class _LoginScreenState extends State<LoginScreen> {
               .toLowerCase();
 
           if (mounted) {
-            AuthProviderWidget.of(context).login(
+            // 🛑 เพิ่ม await ตรงนี้
+            await AuthProviderWidget.of(context).login(
               displayName,
               firebaseUser.email ?? '',
               token: token,
-              role: role, // ส่ง Role ไปเก็บใน Provider
+              role: role, 
             );
-            Navigator.pop(context);
-            Navigator.pushReplacementNamed(context, AppRoutes.main);
+            
+            if (mounted) {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, AppRoutes.main);
+            }
           }
         } else {
           if (mounted) Navigator.pop(context);

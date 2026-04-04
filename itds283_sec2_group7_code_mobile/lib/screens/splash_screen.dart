@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
+import '../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,17 +16,17 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToNext() async {
+    // หน่วงเวลาโชว์โลโก้ 3 วินาที
     await Future.delayed(const Duration(seconds: 3));
 
-    User? firebaseUser = FirebaseAuth.instance.currentUser;
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? customJwtToken = prefs.getString('jwt_token');
-
     if (mounted) {
-      if (firebaseUser != null || customJwtToken != null) {
+      final auth = AuthProviderWidget.of(context);
+
+      if (auth.isLoggedIn) {
+        // ถ้าล็อคอินอยู่แล้ว (ไม่ว่าจะด้วย Google หรือ Backend) ไปหน้า Main
         Navigator.pushReplacementNamed(context, AppRoutes.main);
       } else {
+        // ถ้ายังไม่ล็อคอิน ไปหน้า Login
         Navigator.pushReplacementNamed(context, AppRoutes.login);
       }
     }
