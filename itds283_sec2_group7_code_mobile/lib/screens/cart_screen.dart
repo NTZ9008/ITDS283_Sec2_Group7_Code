@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
@@ -13,7 +15,11 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final TextEditingController _promoController = TextEditingController();
-  bool _isPromoApplied = false;
+  
+  // อัปเดต: เก็บตัวเลขเปอร์เซ็นต์ส่วนลดที่ได้จาก Backend
+  double _discountPercent = 0.0;
+  String? _appliedPromoCode;
+  bool _isLoadingPromo = false;
 
   @override
   void dispose() {
@@ -28,7 +34,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   double _calculateDiscount(double subtotal) {
-    return (subtotal > 0 && _isPromoApplied) ? subtotal * 0.20 : 0;
+    // อัปเดต: คำนวณส่วนลดจาก % จริง
+    return (subtotal > 0 && _discountPercent > 0) ? subtotal * (_discountPercent / 100) : 0;
   }
 
   bool _isAllSelected(CartProvider cart) {
@@ -233,9 +240,10 @@ class _CartScreenState extends State<CartScreen> {
                   child: TextField(
                     controller: _promoController,
                     onChanged: (value) {
-                      if (_isPromoApplied) {
+                      if (_appliedPromoCode != null) {
                         setState(() {
-                          _isPromoApplied = false;
+                          _appliedPromoCode = null;
+                          _discountPercent = 0.0;
                         });
                       }
                     },
@@ -247,12 +255,12 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                 ),
-                if (_isPromoApplied)
+                if (_appliedPromoCode != null)
                   Row(
                     children: [
-                      const Text(
-                        'Promo code applied',
-                        style: TextStyle(
+                      Text(
+                        '$_discountPercent% off',
+                        style: const TextStyle(
                           color: Color(0xFF00D13B),
                           fontSize: 12,
                         ),
@@ -267,7 +275,8 @@ class _CartScreenState extends State<CartScreen> {
                       GestureDetector(
                         onTap: () => setState(() {
                           _promoController.clear();
-                          _isPromoApplied = false;
+                          _appliedPromoCode = null;
+                          _discountPercent = 0.0;
                         }),
                         child: const Icon(
                           Remix.close_circle_fill,
@@ -278,36 +287,78 @@ class _CartScreenState extends State<CartScreen> {
                     ],
                   )
                 else
-                  TextButton(
-                    onPressed: () {
-                      if (_promoController.text.trim() == 'ICT555') {
-                        setState(() {
-                          _isPromoApplied = true;
-                          FocusScope.of(context).unfocus();
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Promo code applied successfully!'),
-                            backgroundColor: Color(0xFF00D13B),
+                  _isLoadingPromo
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: SizedBox(
+                          width: 15, height: 15, 
+                          child: CircularProgressIndicator(strokeWidth: 2)
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          final code = _promoController.text.trim();
+                          if (code.isEmpty) return;
+                          
+                          final auth = AuthProviderWidget.of(context);
+                          if (!auth.isLoggedIn) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please login first'), backgroundColor: Colors.orange),
+                            );
+                            return;
+                          }
+
+                          setState(() => _isLoadingPromo = true);
+
+                          try {
+                            final response = await http.post(
+                              Uri.parse('https://ebookapi.arlifzs.site/api/orders/promo'),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ${auth.token}'
+                              },
+                              body: jsonEncode({'code': code}),
+                            );
+
+                            final data = jsonDecode(response.body);
+
+                            if (response.statusCode == 200) {
+                              setState(() {
+                                _appliedPromoCode = code;
+                                _discountPercent = (data['discountPercent'] ?? 0).toDouble();
+                                FocusScope.of(context).unfocus();
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Promo code applied! $_discountPercent% off'),
+                                  backgroundColor: const Color(0xFF00D13B),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(data['message'] ?? 'Invalid promo code.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            print(e);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Network error'), backgroundColor: Colors.red),
+                            );
+                          } finally {
+                            setState(() => _isLoadingPromo = false);
+                          }
+                        },
+                        child: const Text(
+                          'Apply',
+                          style: TextStyle(
+                            color: Color(0xFF00D13B),
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Invalid promo code.'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(
-                        color: Color(0xFF00D13B),
-                        fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -316,7 +367,7 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 8),
           _buildSummaryRow(
             'Discount:',
-            _isPromoApplied ? '-\$${discount.toStringAsFixed(2)}' : '\$0.00',
+            _appliedPromoCode != null ? '-\$${discount.toStringAsFixed(2)}' : '\$0.00',
           ),
         ],
       ),
@@ -419,6 +470,7 @@ class _CartScreenState extends State<CartScreen> {
                           'subtotal': subtotal,
                           'discount': discount,
                           'total': total,
+                          'promoCode': _appliedPromoCode, // ส่ง Promo ไปหน้า Checkout
                         },
                       );
                     }
