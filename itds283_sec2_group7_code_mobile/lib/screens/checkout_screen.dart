@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:remixicon/remixicon.dart';
-// 🛑 นำเข้า Provider สำหรับจัดการคลังหนังสือและตะกร้า
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import '../providers/library_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -15,6 +18,10 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentStep = 0;
+
+  bool _isLoadingQR = false;
+  String _qrPayload = '';
+  bool _isProcessingCheckout = false;
 
   final Map<String, dynamic> checkoutData = {
     'fullName': '',
@@ -45,12 +52,101 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
-  // ระบบตรวจสอบข้อมูล (Validation) ก่อนไป Step ถัดไป
+  Future<void> _fetchQRPayload() async {
+    setState(() => _isLoadingQR = true);
+    final auth = AuthProviderWidget.of(context);
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://ebookapi.arlifzs.site/api/orders/qr-payment'),
+        headers: {'Authorization': 'Bearer ${auth.token}'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        setState(() {
+          _qrPayload = data['qrPayload'] ?? '';
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Failed to get QR')),
+        );
+      }
+    } catch (e) {
+      print("QR Error: $e");
+    } finally {
+      setState(() => _isLoadingQR = false);
+    }
+  }
+
+  Future<void> _submitCheckoutData() async {
+    setState(() => _isProcessingCheckout = true);
+    final auth = AuthProviderWidget.of(context);
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
+        {};
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://ebookapi.arlifzs.site/api/orders/checkout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${auth.token}',
+        },
+        body: jsonEncode({
+          "promoCode": args['promoCode'],
+          "paymentMethod": checkoutData['paymentMethod'],
+          "fullName": checkoutData['fullName'],
+          "phone": checkoutData['phoneNumber'],
+          "province": checkoutData['province'],
+          "city": checkoutData['city'],
+          "address": checkoutData['address'],
+          "postalCode": checkoutData['postalCode'],
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        if (checkoutData['items'] != null) {
+          LibraryProviderWidget.of(context).addItems(checkoutData['items']);
+          final cartProvider = CartProviderWidget.of(context);
+          for (var item in checkoutData['items']) {
+            final cartItem = cartProvider.items
+                .where((e) => e.title == item['title'])
+                .firstOrNull;
+            if (cartItem != null) {
+              cartProvider.removeItem(cartItem);
+            }
+          }
+        }
+
+        _goToNextStep(3);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Checkout failed!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Checkout Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Network Error!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isProcessingCheckout = false);
+    }
+  }
+
   void _nextStep() async {
     FocusScope.of(context).unfocus();
 
     if (_currentStep == 0) {
-      // ตรวจสอบว่ากรอกข้อมูลครบทุกช่องหรือไม่ (รวมจังหวัดและอำเภอ)
       if (_nameController.text.isEmpty ||
           _phoneController.text.isEmpty ||
           _provinceController.text.isEmpty ||
@@ -66,13 +162,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
-      // บันทึกข้อมูลลง Map
       checkoutData['fullName'] = _nameController.text;
       checkoutData['phoneNumber'] = _phoneController.text;
       checkoutData['province'] = _provinceController.text;
       checkoutData['city'] = _cityController.text;
       checkoutData['address'] = _addressController.text;
       checkoutData['postalCode'] = _postalController.text;
+
+      await _fetchQRPayload();
+      _goToNextStep(1);
+    } else if (_currentStep == 1) {
+      _goToNextStep(2);
     } else if (_currentStep == 2) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
@@ -80,33 +180,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       checkoutData['items'] = args['items'];
       checkoutData['totalPaid'] = args['total'];
 
-      // 🛑 เมื่อถึงหน้า Confirm สั่งให้เอาหนังสือที่ซื้อเข้าคลัง Library
-      if (checkoutData['items'] != null) {
-        LibraryProviderWidget.of(context).addItems(checkoutData['items']);
-
-        // 🛑 เคลียร์สินค้าที่เพิ่งซื้อออกจากตะกร้า Cart ด้วย
-        final cartProvider = CartProviderWidget.of(context);
-        for (var item in checkoutData['items']) {
-          final cartItem = cartProvider.items
-              .where((e) => e.title == item['title'])
-              .firstOrNull;
-          if (cartItem != null) {
-            cartProvider.removeItem(cartItem);
-          }
-        }
-      }
+      await _submitCheckoutData();
     }
+  }
 
-    if (_currentStep < 3) {
-      int nextStep = _currentStep + 1;
+  void _goToNextStep(int nextStep) {
+    if (nextStep <= 3) {
       _pageController.animateToPage(
         nextStep,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      setState(() {
-        _currentStep = nextStep;
-      });
+      setState(() => _currentStep = nextStep);
     }
   }
 
@@ -246,7 +331,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
-          onPressed: _nextStep,
+          onPressed: _isProcessingCheckout || _isLoadingQR ? null : _nextStep,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00D13B),
             shape: RoundedRectangleBorder(
@@ -254,14 +339,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             elevation: 0,
           ),
-          child: const Text(
-            'Confirm',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: _isProcessingCheckout
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text(
+                  'Confirm',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
       ),
     );
@@ -280,30 +374,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           const SizedBox(height: 20),
-
           _buildTextField('Full Name*', _nameController, 'Enter Full Name'),
-
           _buildTextField(
             'Phone Number*',
             _phoneController,
             '0xxxxxxxxx',
             isPhone: true,
           ),
-
           _buildTextField('Province*', _provinceController, 'Enter Province'),
-
           _buildTextField(
             'City/District*',
             _cityController,
             'Enter City/District',
           ),
-
           _buildTextField(
             'Street Address*',
             _addressController,
             'Enter street address',
           ),
-
           _buildTextField(
             'Postal Code*',
             _postalController,
@@ -369,11 +457,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          Image.network(
-            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MockupQR_Total_${checkoutData['totalPaid']}',
-            width: 200,
-            height: 200,
-          ),
+
+          _isLoadingQR
+              ? const CircularProgressIndicator()
+              : _qrPayload.isNotEmpty
+              ? Image.network(
+                  'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$_qrPayload',
+                  width: 200,
+                  height: 200,
+                )
+              : const Text(
+                  'Failed to load QR code. Is your backend cart empty?',
+                  textAlign: TextAlign.center,
+                ),
         ],
       ),
     );
@@ -560,7 +656,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               '/main',
               (route) => false,
             );
-
             Navigator.pushNamed(context, '/lib');
           }),
         ],
