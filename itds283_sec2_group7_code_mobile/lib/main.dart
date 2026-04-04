@@ -6,17 +6,18 @@ import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/favorite_provider.dart';
 import 'providers/library_provider.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   final prefs = await SharedPreferences.getInstance();
   final savedToken = prefs.getString('token');
   final savedUsername = prefs.getString('username') ?? 'Guest';
   final savedEmail = prefs.getString('email') ?? '';
   final savedRole = prefs.getString('role') ?? 'buyer';
-
   runApp(
     MyApp(
       token: savedToken,
