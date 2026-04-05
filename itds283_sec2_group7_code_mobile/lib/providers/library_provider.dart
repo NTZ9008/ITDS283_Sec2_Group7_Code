@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,10 +23,25 @@ class LibraryItem {
     this.pdfUrl = '',
     this.isDownloaded = false,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'bookId': bookId,
+      'isDownloaded': isDownloaded,
+      'book': {
+        'title': title,
+        'author': author,
+        'imageUrl': imageUrl,
+        'pdfUrl': pdfUrl,
+      }
+    };
+  }
 }
 
 class LibraryProvider extends ChangeNotifier {
   static const String _baseUrl = 'https://ebookapi.arlifzs.site/api';
+  static const String _offlineKey = 'offline_library_cache';
 
   List<LibraryItem> _items = [];
   bool isLoading = false;
@@ -36,25 +53,84 @@ class LibraryProvider extends ChangeNotifier {
     return prefs.getString('token') ?? prefs.getString('seller_token');
   }
 
-  // GET /users/library
+  // เช็คไฟล์จริงในเครื่องและอัปเดตสถานะ
+  Future<void> _syncWithFileSystem() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      for (var item in _items) {
+        if (item.pdfUrl.isNotEmpty) {
+          final fileName = item.pdfUrl.split('/').last;
+          final file = File('${dir.path}/$fileName');
+          item.isDownloaded = await file.exists();
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      print("Sync Error: $e");
+    }
+  }
+
+  Future<void> _saveOfflineCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String jsonData = jsonEncode(_items.map((e) => e.toJson()).toList());
+      await prefs.setString(_offlineKey, jsonData);
+    } catch (e) {
+      print('Error saving offline cache: $e');
+    }
+  }
+
+  List<LibraryItem> _parseItems(List<dynamic> list) {
+    return list.map((e) {
+      final book = e['book'] ?? e;
+      String imageUrl = book['imageUrl'] ?? book['image'] ?? '';
+      if (imageUrl.startsWith('/uploads/')) {
+        imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
+      }
+      String pdfUrl = book['pdfUrl'] ?? '';
+      if (pdfUrl.startsWith('/uploads/')) {
+        pdfUrl = 'https://ebookapi.arlifzs.site$pdfUrl';
+      }
+      return LibraryItem(
+        id: e['id'],
+        bookId: book['id'] ?? e['bookId'],
+        title: book['title'] ?? '',
+        author: book['author'] ?? '',
+        imageUrl: imageUrl,
+        pdfUrl: pdfUrl,
+        isDownloaded: e['isDownloaded'] ?? false,
+      );
+    }).toList();
+  }
+
   Future<void> fetchLibrary() async {
     isLoading = true;
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? cachedData = prefs.getString(_offlineKey);
+      if (cachedData != null) {
+        _items = _parseItems(jsonDecode(cachedData));
+        await _syncWithFileSystem();
+      }
+    } catch (e) {
+      print("Cache load error: $e");
+    }
+
+    try {
       final token = await _getToken();
       if (token == null) {
         _items = [];
+        isLoading = false;
+        notifyListeners();
         return;
       }
 
       final response = await http.get(
         Uri.parse('$_baseUrl/users/library'),
         headers: {'Authorization': 'Bearer $token'},
-      );
-
-      print('Library status: ${response.statusCode}');
-      print('Library body: ${response.body}');
+      ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -62,36 +138,19 @@ class LibraryProvider extends ChangeNotifier {
             ? data
             : (data['library'] ?? data['items'] ?? data['data'] ?? []);
 
-        _items = list.map((e) {
-          final book = e['book'] ?? e;
-          String imageUrl = book['imageUrl'] ?? book['image'] ?? '';
-          if (imageUrl.startsWith('/uploads/')) {
-            imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
-          }
-          String pdfUrl = book['pdfUrl'] ?? '';
-          if (pdfUrl.startsWith('/uploads/')) {
-            pdfUrl = 'https://ebookapi.arlifzs.site$pdfUrl';
-          }
-          return LibraryItem(
-            id: e['id'],
-            bookId: book['id'] ?? e['bookId'],
-            title: book['title'] ?? '',
-            author: book['author'] ?? '',
-            imageUrl: imageUrl,
-            pdfUrl: pdfUrl,
-            isDownloaded: e['isDownloaded'] ?? false,
-          );
-        }).toList();
+        _items = _parseItems(list);
+        await _syncWithFileSystem(); 
+        await _saveOfflineCache();
       }
     } catch (e) {
       print('fetchLibrary error: $e');
+      await _syncWithFileSystem(); 
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  // เพิ่มหนังสือหลังจากซื้อ (local fallback)
   void addItems(List<dynamic> newItems) {
     for (var item in newItems) {
       bool isExist = _items.any((e) => e.title == item['title']);
@@ -103,11 +162,14 @@ class LibraryProvider extends ChangeNotifier {
         ));
       }
     }
+    _syncWithFileSystem();
+    _saveOfflineCache();
     notifyListeners();
   }
 
   void toggleDownload(int index) {
     _items[index].isDownloaded = !_items[index].isDownloaded;
+    _saveOfflineCache();
     notifyListeners();
   }
 }

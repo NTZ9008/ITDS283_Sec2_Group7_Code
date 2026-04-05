@@ -4,6 +4,8 @@ import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/library_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 const List<Color> _bookBgColors = [
   Color(0xFFB2EEF4), // ฟ้า
@@ -62,20 +64,17 @@ class _ProductCardState extends State<ProductCard> {
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
     } else {
-      return Image.network(
-        widget.imageUrl,
-        key: ValueKey(widget.imageUrl),
+      // 🛑 เปลี่ยนมาใช้ CachedNetworkImage เพื่อให้ออฟไลน์ดูได้
+      return CachedNetworkImage(
+        imageUrl: widget.imageUrl,
         fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF00D13B),
-              strokeWidth: 2,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) =>
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF00D13B),
+            strokeWidth: 2,
+          ),
+        ),
+        errorWidget: (context, url, error) =>
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
     }
@@ -92,7 +91,9 @@ class _ProductCardState extends State<ProductCard> {
           AppRoutes.productDetail,
           arguments: {
             'title': widget.title,
-            'author': widget.author.isNotEmpty ? widget.author : 'Unknown Author',
+            'author': widget.author.isNotEmpty
+                ? widget.author
+                : 'Unknown Author',
             'description': widget.description,
             'price': widget.price,
             'imageUrl': widget.imageUrl,
@@ -187,6 +188,38 @@ class _ProductCardState extends State<ProductCard> {
                     const SizedBox(width: 5),
                     GestureDetector(
                       onTap: () {
+                        // 1. ดักให้ล็อกอินก่อน
+                        if (!AuthProviderWidget.of(context).isLoggedIn) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please login to add items to cart',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // 🛑 2. ดักว่าถ้ามีในคลังแล้ว ห้ามเอาลงตะกร้า
+                        final isOwned = LibraryProviderWidget.of(
+                          context,
+                        ).items.any((item) => item.title == widget.title);
+
+                        if (isOwned) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'You already own "${widget.title}"',
+                              ),
+                              backgroundColor: Colors.blueAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // 3. ถ้าผ่านฉลุย ค่อยโยนลงตะกร้า
                         CartProviderWidget.of(context).addItem(
                           title: widget.title,
                           price: widget.price,

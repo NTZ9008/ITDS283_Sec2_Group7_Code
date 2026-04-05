@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:remixicon/remixicon.dart';
 import '../providers/library_provider.dart';
 import '../routes/app_routes.dart';
 
@@ -130,36 +134,27 @@ class _LibraryBookCardState extends State<_LibraryBookCard> {
   bool _isDownloading = false;
 
   Future<void> _handleDownloadToggle() async {
-    if (widget.book.isDownloaded) {
-      widget.provider.toggleDownload(widget.index);
+    if (widget.book.pdfUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('"${widget.book.title}" removed from downloads'),
-          backgroundColor: const Color(0xFF00D13B),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+        const SnackBar(content: Text('PDF not available for this book')),
       );
-    } else {
-      if (_isDownloading) return;
+      return;
+    }
 
-      setState(() {
-        _isDownloading = true;
-      });
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName = widget.book.pdfUrl.split('/').last;
+    final file = File('${dir.path}/$fileName');
 
-      await Future.delayed(const Duration(seconds: 2));
-
+    if (widget.book.isDownloaded) {
+      // 🛑 ลบไฟล์จริงออกจากเครื่อง
+      if (await file.exists()) {
+        await file.delete();
+      }
+      widget.provider.toggleDownload(widget.index);
       if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
-        widget.provider.toggleDownload(widget.index);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('"${widget.book.title}" downloaded'),
+            content: Text('"${widget.book.title}" removed from downloads'),
             backgroundColor: const Color(0xFF00D13B),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 1),
@@ -168,6 +163,48 @@ class _LibraryBookCardState extends State<_LibraryBookCard> {
             ),
           ),
         );
+      }
+    } else {
+      // 🛑 ดาวน์โหลดไฟล์จริงลงเครื่อง
+      if (_isDownloading) return;
+
+      setState(() => _isDownloading = true);
+
+      try {
+        final response = await http.get(Uri.parse(widget.book.pdfUrl));
+        if (response.statusCode == 200) {
+          await file.writeAsBytes(response.bodyBytes);
+          widget.provider.toggleDownload(widget.index);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '"${widget.book.title}" downloaded successfully!',
+                ),
+                backgroundColor: const Color(0xFF00D13B),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          }
+        } else {
+          throw Exception('Failed to load PDF');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Download failed. Please check your connection.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isDownloading = false);
       }
     }
   }
@@ -233,9 +270,10 @@ class _LibraryBookCardState extends State<_LibraryBookCard> {
                     )
                   : Icon(
                       widget.book.isDownloaded
-                          ? Icons.cloud_off_outlined
-                          : Icons.cloud_download_outlined,
-                      size: 18,
+                          ? Remix
+                                .checkbox_circle_fill // โหลดแล้ว (ติ๊กถูกสีเขียว)
+                          : Remix.download_cloud_2_line, // ยังไม่โหลด (เมฆ)
+                      size: 20,
                       color: widget.book.isDownloaded
                           ? const Color(0xFF00D13B)
                           : Colors.black45,

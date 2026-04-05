@@ -4,6 +4,9 @@ import 'package:remixicon/remixicon.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../widgets/product_card.dart';
+import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
+import '../providers/library_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,6 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchBooks();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = AuthProviderWidget.of(context);
+      if (auth.isLoggedIn) {
+        LibraryProviderWidget.of(context).fetchLibrary();
+        CartProviderWidget.of(context).fetchCart();
+      }
+    });
   }
 
   Future<void> _fetchBooks() async {
