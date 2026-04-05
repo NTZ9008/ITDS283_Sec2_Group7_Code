@@ -16,6 +16,11 @@ exports.getAllBooks = async (query) => {
 
   return await prisma.book.findMany({
     where: whereClause,
+    include: {
+      _count: {
+        select: { orderItems: true }
+      }
+    },
     orderBy: { createdAt: 'desc' },
   });
 };
