@@ -89,6 +89,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  // 🛑 ฟังก์ชันเปิดปฏิทินให้เลือกวันเกิด
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000), // ค่าเริ่มต้นปี 2000
+      firstDate: DateTime(1900), // ย้อนหลังได้ถึงปี 1900
+      lastDate: DateTime.now(), // ห้ามเลือกอนาคต
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2B58F6), // สีปุ่มและหัวปฏิทิน
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        // จัดฟอร์แมตให้เป็น DD/MM/YYYY ตามเดิม
+        final day = picked.day.toString().padLeft(2, '0');
+        final month = picked.month.toString().padLeft(2, '0');
+        _dobController.text = "$day/$month/${picked.year}";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,10 +155,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _buildTextField(_firstNameController, 'First Name'),
                     _buildTextField(_lastNameController, 'Last Name'),
                     _buildTextField(_emailController, 'Email Address'),
-                    _buildTextField(
-                      _dobController,
-                      'Date of Birth (DD/MM/YYYY)',
-                      icon: Icons.calendar_today_outlined,
+
+                    // 🛑 ครอบด้วย GestureDetector และ AbsorbPointer เพื่อให้กดแล้วคีย์บอร์ดไม่เด้ง แต่ปฏิทินเด้งแทน
+                    GestureDetector(
+                      onTap: () => _selectDate(context),
+                      child: AbsorbPointer(
+                        child: _buildTextField(
+                          _dobController,
+                          'Date of Birth (DD/MM/YYYY)',
+                          icon: Icons.calendar_today_outlined,
+                        ),
+                      ),
                     ),
 
                     Container(

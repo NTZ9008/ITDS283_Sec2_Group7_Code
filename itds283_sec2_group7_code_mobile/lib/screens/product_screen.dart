@@ -13,7 +13,19 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   int _selectedCategoryIndex = 0;
   List<Map<String, dynamic>> _allBooks = [];
-  List<String> _categories = ['All'];
+
+  // 🛑 ล็อกหมวดหมู่วิชาไว้ตายตัวตามหน้า Home
+  final List<String> _categories = [
+    'All',
+    'Finance',
+    'Math',
+    'Science',
+    'English',
+    'Bio',
+    'Chemi',
+    'Physics',
+  ];
+
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -33,9 +45,10 @@ class _ProductScreenState extends State<ProductScreen> {
 
     try {
       final uri = Uri.parse('$_baseUrl/books');
-      final response = await http.get(uri, headers: {
-        'Accept': 'application/json',
-      });
+      final response = await http.get(
+        uri,
+        headers: {'Accept': 'application/json'},
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -47,17 +60,9 @@ class _ProductScreenState extends State<ProductScreen> {
 
         final books = list.map((e) => Map<String, dynamic>.from(e)).toList();
 
-        // สร้าง categories จาก books ที่ได้มา
-        final categorySet = books
-            .map((b) => b['category']?.toString() ?? '')
-            .where((c) => c.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-
         setState(() {
           _allBooks = books;
-          _categories = ['All', ...categorySet];
+          // 🛑 ลบโค้ดส่วนที่สร้าง _categories อัตโนมัติทิ้งไปแล้ว ใช้ค่าคงที่แทน
           _isLoading = false;
         });
       } else {
@@ -74,9 +79,7 @@ class _ProductScreenState extends State<ProductScreen> {
   List<Map<String, dynamic>> get _filteredBooks {
     final selectedCategory = _categories[_selectedCategoryIndex];
     if (selectedCategory == 'All') return _allBooks;
-    return _allBooks
-        .where((b) => b['category'] == selectedCategory)
-        .toList();
+    return _allBooks.where((b) => b['category'] == selectedCategory).toList();
   }
 
   @override
@@ -102,27 +105,15 @@ class _ProductScreenState extends State<ProductScreen> {
       width: double.infinity,
       color: const Color(0xFF00D13B),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              '67-E Book',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                fontFamily: 'Jua',
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          if (!_isLoading)
-            IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: _fetchBooks,
-              tooltip: 'Refresh',
-            ),
-        ],
+      child: const Text(
+        '67-E Book',
+        style: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          fontFamily: 'Jua',
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -138,8 +129,10 @@ class _ProductScreenState extends State<ProductScreen> {
             return GestureDetector(
               onTap: () => setState(() => _selectedCategoryIndex = index),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -158,8 +151,9 @@ class _ProductScreenState extends State<ProductScreen> {
                   _categories[index],
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     color: isSelected
                         ? const Color(0xFF00D13B)
                         : Colors.black87,
@@ -187,7 +181,11 @@ class _ProductScreenState extends State<ProductScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.black26),
+              const Icon(
+                Icons.wifi_off_rounded,
+                size: 56,
+                color: Colors.black26,
+              ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
@@ -198,12 +196,16 @@ class _ProductScreenState extends State<ProductScreen> {
               ElevatedButton.icon(
                 onPressed: _fetchBooks,
                 icon: const Icon(Icons.refresh, color: Colors.white),
-                label: const Text('ลองใหม่',
-                    style: TextStyle(color: Colors.white)),
+                label: const Text(
+                  'ลองใหม่',
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00D13B),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -227,40 +229,43 @@ class _ProductScreenState extends State<ProductScreen> {
       );
     }
 
+    // มี RefreshIndicator อยู่แล้ว สามารถดึงลงเพื่อ Refresh ได้เลย
     return RefreshIndicator(
       color: const Color(0xFF00D13B),
       onRefresh: _fetchBooks,
       child: GridView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  crossAxisCount: 2,
-  childAspectRatio: 0.65, // เปลี่ยนจาก 0.50 เป็น 0.65
-  crossAxisSpacing: 15,
-  mainAxisSpacing: 15,
-),
+          crossAxisCount: 2,
+          childAspectRatio: 0.65, // เปลี่ยนจาก 0.50 เป็น 0.65
+          crossAxisSpacing: 15,
+          mainAxisSpacing: 15,
+        ),
         itemCount: books.length,
         itemBuilder: (context, index) {
-  final book = books[index];
-  
-  // เพิ่ม baseUrl ถ้า imageUrl ขึ้นต้นด้วย /uploads/
-  String imageUrl = book['imageUrl'] ?? book['image'] ?? book['image_url'] ?? '';
-  if (imageUrl.startsWith('/uploads/')) {
-    imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
-  }
+          final book = books[index];
 
-  return ProductCard(
-  title: book['title'] ?? '',
-  author: book['author'] ?? '',           // เพิ่ม
-  description: book['description'] ?? '',
-  price: (book['price'] is String
-          ? double.tryParse(book['price']) 
-          : book['price']?.toDouble()) ??
-      0.0,
-  imageUrl: imageUrl,
-  bookId: book['id'],                     // เพิ่ม
-  index: index,
-);
-},
+          // เพิ่ม baseUrl ถ้า imageUrl ขึ้นต้นด้วย /uploads/
+          String imageUrl =
+              book['imageUrl'] ?? book['image'] ?? book['image_url'] ?? '';
+          if (imageUrl.startsWith('/uploads/')) {
+            imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
+          }
+
+          return ProductCard(
+            title: book['title'] ?? '',
+            author: book['author'] ?? '', // เพิ่ม
+            description: book['description'] ?? '',
+            price:
+                (book['price'] is String
+                    ? double.tryParse(book['price'])
+                    : book['price']?.toDouble()) ??
+                0.0,
+            imageUrl: imageUrl,
+            bookId: book['id'], // เพิ่ม
+            index: index,
+          );
+        },
       ),
     );
   }

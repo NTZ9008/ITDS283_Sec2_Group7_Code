@@ -147,6 +147,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     FocusScope.of(context).unfocus();
 
     if (_currentStep == 0) {
+      // 1. ดักว่าห้ามมีช่องว่าง
       if (_nameController.text.isEmpty ||
           _phoneController.text.isEmpty ||
           _provinceController.text.isEmpty ||
@@ -162,6 +163,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
+      // 🛑 2. ดักเบอร์โทรศัพท์ ต้องครบ 10 หลักพอดี
+      if (_phoneController.text.length != 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone number must be exactly 10 digits'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // 🛑 3. ดักรหัสไปรษณีย์ ต้องครบ 5 หลักพอดี
+      if (_postalController.text.length != 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Postal code must be exactly 5 digits'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // ถ้าข้อมูลถูกต้องครบถ้วน ค่อยเซฟลงตัวแปร
       checkoutData['fullName'] = _nameController.text;
       checkoutData['phoneNumber'] = _phoneController.text;
       checkoutData['province'] = _provinceController.text;
