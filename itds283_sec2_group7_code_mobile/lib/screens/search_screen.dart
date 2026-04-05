@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../providers/cart_provider.dart';
-import '../providers/favorite_provider.dart'; // 🛑 1. Import FavoriteProvider
+import '../providers/favorite_provider.dart';
 import '../routes/app_routes.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -11,53 +13,12 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  static const String _baseUrl = 'https://ebookapi.arlifzs.site/api';
+
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-
-  // 🛑 2. เปลี่ยนชื่อ Title ให้ไม่ซ้ำกัน เพื่อป้องกันปัญหากด Favorite แล้วแดงทุกอัน
-  final List<Map<String, dynamic>> _allBooks = [
-    {
-      'title': 'Mathematics 101',
-      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 120.00,
-      'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-    },
-    {
-      'title': 'Science Basic',
-      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 140.00,
-      'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-    },
-    {
-      'title': 'English Grammar',
-      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 150.00,
-      'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-    },
-    {
-      'title': 'Biology Exploring',
-      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
-      'price': 220.00,
-      'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3145/3145765.png',
-    },
-  ];
-
-  // ลบ Set _favorites ออก เพราะเราจะใช้ Provider แทนแล้ว
-
-  List<Map<String, dynamic>> get _filtered {
-    if (_query.isEmpty) return _allBooks;
-    return _allBooks
-        .where(
-          (b) =>
-              (b['title'] as String).toLowerCase().contains(
-                _query.toLowerCase(),
-              ) ||
-              (b['description'] as String).toLowerCase().contains(
-                _query.toLowerCase(),
-              ),
-        )
-        .toList();
-  }
+  List<Map<String, dynamic>> _results = [];
+  bool _isLoading = false;
+  bool _hasSearched = false;
 
   @override
   void dispose() {
@@ -65,10 +26,50 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  Future<void> _search(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _hasSearched = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+    });
+
+    try {
+      final uri = Uri.parse('$_baseUrl/books?search=${Uri.encodeComponent(query)}');
+      final response = await http.get(uri, headers: {'Accept': 'application/json'});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> list =
+            data is List ? data : (data['books'] ?? data['data'] ?? []);
+
+        setState(() {
+          _results = list.map((e) {
+            String imageUrl = e['imageUrl'] ?? e['image'] ?? '';
+            if (imageUrl.startsWith('/uploads/')) {
+              imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
+            }
+            return {
+              ...Map<String, dynamic>.from(e),
+              'imageUrl': imageUrl,
+            };
+          }).toList();
+        });
+      }
+    } catch (_) {} 
+    finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -78,13 +79,33 @@ class _SearchScreenState extends State<SearchScreen> {
             _buildHeader(context),
             _buildSearchBar(),
             const SizedBox(height: 12),
-            Expanded(
-              child: results.isEmpty ? _buildEmpty() : _buildGrid(results),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+      );
+    }
+    if (!_hasSearched) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search, size: 64, color: Colors.black12),
+            SizedBox(height: 12),
+            Text('Search for books...', style: TextStyle(color: Colors.black38)),
+          ],
+        ),
+      );
+    }
+    if (_results.isEmpty) return _buildEmpty();
+    return _buildGrid(_results);
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -95,20 +116,12 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: Colors.black87,
-            ),
+            child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
           ),
           const SizedBox(height: 12),
           const Text(
             'Search',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF00D13B),
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00D13B)),
           ),
           const Text(
             'Find books, sheets, and notes.',
@@ -129,14 +142,23 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         child: TextField(
           controller: _searchController,
-          onChanged: (v) => setState(() => _query = v),
+          onChanged: (v) => _search(v), // ค้นหาทันทีเมื่อพิมพ์
           style: const TextStyle(fontSize: 14),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Search Here...',
-            hintStyle: TextStyle(fontSize: 14, color: Colors.black38),
-            prefixIcon: Icon(Icons.search, color: Colors.black45, size: 22),
+            hintStyle: const TextStyle(fontSize: 14, color: Colors.black38),
+            prefixIcon: const Icon(Icons.search, color: Colors.black45, size: 22),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      _search('');
+                    },
+                    child: const Icon(Icons.clear, color: Colors.black38, size: 20),
+                  )
+                : null,
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ),
@@ -150,10 +172,7 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           Icon(Icons.search_off, size: 64, color: Colors.black26),
           SizedBox(height: 12),
-          Text(
-            'No results found',
-            style: TextStyle(fontSize: 16, color: Colors.black45),
-          ),
+          Text('No results found', style: TextStyle(fontSize: 16, color: Colors.black45)),
         ],
       ),
     );
@@ -169,18 +188,16 @@ class _SearchScreenState extends State<SearchScreen> {
         mainAxisSpacing: 12,
       ),
       itemCount: results.length,
-      itemBuilder: (context, index) =>
-          _buildCard(context, index, results[index]),
+      itemBuilder: (context, index) => _buildCard(context, index, results[index]),
     );
   }
 
-  Widget _buildCard(
-    BuildContext context,
-    int index,
-    Map<String, dynamic> book,
-  ) {
-    // 🛑 3. ดึงสถานะ Favorite จาก Provider
+  Widget _buildCard(BuildContext context, int index, Map<String, dynamic> book) {
     final isFav = FavoriteProviderWidget.of(context).isFavorite(book['title']);
+    final price = (book['price'] is String
+            ? double.tryParse(book['price'])
+            : book['price']?.toDouble()) ??
+        0.0;
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -188,10 +205,11 @@ class _SearchScreenState extends State<SearchScreen> {
         AppRoutes.productDetail,
         arguments: {
           'title': book['title'],
-          'author': 'Unknown Author',
-          'description': book['description'],
-          'price': book['price'],
-          'imageUrl': book['imageUrl'],
+          'author': book['author'] ?? '',
+          'description': book['description'] ?? '',
+          'price': price,
+          'imageUrl': book['imageUrl'] ?? '',
+          'bookId': book['id'],
         },
       ),
       child: Container(
@@ -202,18 +220,15 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(14),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
               child: Container(
-                height: 160,
+                height: 140,
                 width: double.infinity,
                 color: const Color(0xFFB2EEF4),
                 child: Image.network(
-                  book['imageUrl'],
-                  fit: BoxFit.contain,
+                  book['imageUrl'] ?? '',
+                  fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.menu_book_rounded,
                     color: Color(0xFF5B9BD5),
@@ -228,17 +243,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    book['title'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                    book['title'] ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    book['description'],
+                    book['description'] ?? '',
                     style: const TextStyle(fontSize: 11, color: Colors.black54),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -248,7 +260,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${(book['price'] as double).toStringAsFixed(2)}',
+                        '฿${price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -257,19 +269,17 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       Row(
                         children: [
-                          // 🛑 4. ปุ่ม Favorite เรียกใช้งาน Provider
                           GestureDetector(
                             onTap: () {
                               FavoriteProviderWidget.of(context).toggleFavorite(
                                 title: book['title'],
-                                description: book['description'],
-                                price: book['price'],
-                                imageUrl: book['imageUrl'],
+                                description: book['description'] ?? '',
+                                price: price,
+                                imageUrl: book['imageUrl'] ?? '',
                               );
                             },
                             child: Container(
-                              width: 30,
-                              height: 30,
+                              width: 30, height: 30,
                               decoration: const BoxDecoration(
                                 color: Color(0xFF006B3F),
                                 shape: BoxShape.circle,
@@ -282,40 +292,29 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          // 🛑 5. ปุ่ม Add to cart (ใช้ Provider เดิมที่คุณเขียนไว้ได้เลย)
                           GestureDetector(
                             onTap: () {
                               CartProviderWidget.of(context).addItem(
                                 title: book['title'],
-                                price: book['price'],
-                                imageUrl: book['imageUrl'],
+                                price: price,
+                                imageUrl: book['imageUrl'] ?? '',
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    'Added "${book['title']}" to cart',
-                                  ),
+                                  content: Text('Added "${book['title']}" to cart'),
                                   backgroundColor: const Color(0xFF00D13B),
                                   behavior: SnackBarBehavior.floating,
                                   duration: const Duration(seconds: 2),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
                                 ),
                               );
                             },
                             child: Container(
-                              width: 30,
-                              height: 30,
+                              width: 30, height: 30,
                               decoration: const BoxDecoration(
                                 color: Color(0xFF006B3F),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 18,
-                              ),
+                              child: const Icon(Icons.add, color: Colors.white, size: 18),
                             ),
                           ),
                         ],

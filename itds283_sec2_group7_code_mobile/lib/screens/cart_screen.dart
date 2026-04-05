@@ -21,6 +21,16 @@ class _CartScreenState extends State<CartScreen> {
   String? _appliedPromoCode;
   bool _isLoadingPromo = false;
 
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = AuthProviderWidget.of(context);
+    if (auth.isLoggedIn) {
+      CartProviderWidget.of(context).fetchCart();
+    }
+  });
+}
   @override
   void dispose() {
     _promoController.dispose();
@@ -42,14 +52,24 @@ class _CartScreenState extends State<CartScreen> {
     return cart.items.isNotEmpty && cart.items.every((item) => item.selected);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cartProvider = CartProviderWidget.of(context);
-    final items = cartProvider.items;
+@override
+Widget build(BuildContext context) {
+  final cartProvider = CartProviderWidget.of(context);
 
-    final subtotal = _calculateSubtotal(cartProvider);
-    final discount = _calculateDiscount(subtotal);
-    final total = subtotal > 0 ? (subtotal - discount) : 0.0;
+  // แสดง loading
+  if (cartProvider.isLoading) {
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+      ),
+    );
+  }
+
+  final items = cartProvider.items;
+  final subtotal = _calculateSubtotal(cartProvider);
+  final discount = _calculateDiscount(subtotal);
+  final total = subtotal > 0 ? (subtotal - discount) : 0.0;
 
     return Scaffold(
       backgroundColor: Colors.white,

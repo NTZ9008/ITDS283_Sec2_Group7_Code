@@ -101,6 +101,7 @@ const getLibrary = async (req, res) => {
             description: true,
             price: true,
             imageUrl: true,
+            pdfUrl: true, // ← เพิ่มบรรทัดนี้
           },
         },
       },

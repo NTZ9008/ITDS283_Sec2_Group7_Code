@@ -190,6 +190,7 @@ class _ProductCardState extends State<ProductCard> {
                           title: widget.title,
                           price: widget.price,
                           imageUrl: widget.imageUrl,
+                          bookId: widget.bookId,
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

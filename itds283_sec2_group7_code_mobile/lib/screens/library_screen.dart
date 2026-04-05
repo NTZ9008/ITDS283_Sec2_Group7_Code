@@ -2,12 +2,35 @@ import 'package:flutter/material.dart';
 import '../providers/library_provider.dart';
 import '../routes/app_routes.dart';
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
+
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      LibraryProviderWidget.of(context).fetchLibrary();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final libraryProvider = LibraryProviderWidget.of(context);
+
+    if (libraryProvider.isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+        ),
+      );
+    }
+
     final books = libraryProvider.items;
 
     return Scaffold(
