@@ -148,6 +148,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 description: widget.description,
                 price: widget.price,
                 imageUrl: widget.imageUrl,
+                bookId: widget.bookId,
               );
             },
             child: Container(

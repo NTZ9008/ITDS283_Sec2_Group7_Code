@@ -173,6 +173,7 @@ class _ProductCardState extends State<ProductCard> {
                           description: widget.description,
                           price: widget.price,
                           imageUrl: widget.imageUrl,
+                          bookId: widget.bookId,
                         );
                       },
                       child: Icon(
