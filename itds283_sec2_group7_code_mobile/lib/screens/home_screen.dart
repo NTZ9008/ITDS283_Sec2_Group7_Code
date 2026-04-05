@@ -43,18 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List<dynamic> list =
-            data is List ? data : (data['books'] ?? data['data'] ?? []);
+        final List<dynamic> list = data is List
+            ? data
+            : (data['books'] ?? data['data'] ?? []);
         setState(() {
           _allBooks = list.map((e) {
             String imageUrl = e['imageUrl'] ?? e['image'] ?? '';
             if (imageUrl.startsWith('/uploads/')) {
               imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
             }
-            return {
-              ...Map<String, dynamic>.from(e),
-              'imageUrl': imageUrl,
-            };
+            return {...Map<String, dynamic>.from(e), 'imageUrl': imageUrl};
           }).toList();
           _isLoading = false;
         });
@@ -172,24 +170,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: const Text('PROMO',
-                        style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10)),
+                    child: const Text(
+                      'PROMO',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Special Offer\nGet 20% Off',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2)),
+                  const Text(
+                    'Special Offer\nGet 20% Off',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -252,8 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     category['name'],
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? const Color(0xFF006B3F) : Colors.black54,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? const Color(0xFF006B3F)
+                          : Colors.black54,
                     ),
                   ),
                 ],
@@ -266,93 +277,119 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBestSeller() {
-  if (_isLoading) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: CircularProgressIndicator(color: Color(0xFF00D13B)),
-      ),
-    );
-  }
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+        ),
+      );
+    }
 
-  if (_bestSellers.isEmpty) return const SizedBox.shrink();
+    if (_bestSellers.isEmpty) return const SizedBox.shrink();
 
-  return SizedBox(
-    height: 200,
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
+    final topBook = _bestSellers.first;
+
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: _bestSellers.length,
-      itemBuilder: (context, index) {
-        final book = _bestSellers[index];
-        return GestureDetector(
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRoutes.productDetail,
-            arguments: {
-              'title': book['title'] ?? '',
-              'author': book['author'] ?? '',
-              'description': book['description'] ?? '',
-              'price': (book['price'] is String
-                  ? double.tryParse(book['price'])
-                  : book['price']?.toDouble()) ?? 0.0,
-              'imageUrl': book['imageUrl'] ?? '',
-              'bookId': book['id'],
-            },
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(
+          context,
+          AppRoutes.productDetail,
+          arguments: {
+            'title': topBook['title'] ?? '',
+            'author': topBook['author'] ?? '',
+            'description': topBook['description'] ?? '',
+            'price':
+                (topBook['price'] is String
+                    ? double.tryParse(topBook['price'])
+                    : topBook['price']?.toDouble()) ??
+                0.0,
+            'imageUrl': topBook['imageUrl'] ?? '',
+            'bookId': topBook['id'],
+          },
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFA5D6A7), // สีพื้นหลังการ์ดสีเขียวอ่อนตามแบบ
+            borderRadius: BorderRadius.circular(15),
           ),
-          child: Container(
-            width: 130,
-            margin: const EdgeInsets.only(right: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // รูปอย่างเดียว
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    height: 140,
-                    width: 130,
-                    color: const Color(0xFFB2EEF4),
-                    child: Image.network(
-                      book['imageUrl'] ?? '',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.menu_book_rounded,
-                        color: Color(0xFF5B9BD5),
-                        size: 40,
+          child: Row(
+            children: [
+              // ฝั่งซ้าย: ข้อมูลหนังสือ และปุ่ม Shop Now
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      topBook['title'] ?? 'Unknown Book',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      topBook['author'] ?? 'Unknown Author',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Shop Now',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 15),
+              // ฝั่งขวา: โชว์หน้าปกหนังสืออันดับ 1
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 80,
+                  height: 110,
+                  color: Colors.white,
+                  child: Image.network(
+                    topBook['imageUrl'] ?? '',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Remix.book_read_line,
+                      color: Color(0xFF5B9BD5),
+                      size: 40,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                // ชื่อ
-                Text(
-                  book['title'] ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                // ราคา
-                Text(
-                  '\$${((book['price'] is String ? double.tryParse(book['price']) : book['price']?.toDouble()) ?? 0.0).toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF00D13B),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
-    ),
-  );
-}
+        ),
+      ),
+    );
+  }
 
   Widget _buildNewCollection() {
     if (_isLoading) {
@@ -370,8 +407,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Padding(
         padding: EdgeInsets.all(40.0),
         child: Center(
-          child: Text('No books in this category yet.',
-              style: TextStyle(color: Colors.black45)),
+          child: Text(
+            'No books in this category yet.',
+            style: TextStyle(color: Colors.black45),
+          ),
         ),
       );
     }
@@ -394,7 +433,8 @@ class _HomeScreenState extends State<HomeScreen> {
             title: book['title'] ?? '',
             author: book['author'] ?? '',
             description: book['description'] ?? '',
-            price: (book['price'] is String
+            price:
+                (book['price'] is String
                     ? double.tryParse(book['price'])
                     : book['price']?.toDouble()) ??
                 0.0,

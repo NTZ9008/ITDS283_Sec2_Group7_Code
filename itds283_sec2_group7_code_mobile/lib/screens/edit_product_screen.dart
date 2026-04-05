@@ -31,7 +31,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
   bool _isSubmitting = false;
 
   final List<String> _categories = [
-    'Finance', 'Math', 'Science', 'English', 'Bio', 'Chemi', 'Physics',
+    'Finance',
+    'Math',
+    'Science',
+    'English',
+    'Bio',
+    'Chemi',
+    'Physics',
   ];
 
   @override
@@ -70,7 +76,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               margin: const EdgeInsets.only(top: 12, bottom: 8),
               decoration: BoxDecoration(
                 color: Colors.black12,
@@ -78,12 +85,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: Color(0xFF006B3F)),
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: Color(0xFF006B3F),
+              ),
               title: const Text('Take Photo'),
               onTap: () async {
                 Navigator.pop(context);
                 final picked = await ImagePicker().pickImage(
-                  source: ImageSource.camera, imageQuality: 85,
+                  source: ImageSource.camera,
+                  imageQuality: 85,
                 );
                 if (picked != null && mounted) {
                   setState(() => _imageFile = File(picked.path));
@@ -91,12 +102,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF006B3F)),
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: Color(0xFF006B3F),
+              ),
               title: const Text('Choose from Gallery'),
               onTap: () async {
                 Navigator.pop(context);
                 final picked = await ImagePicker().pickImage(
-                  source: ImageSource.gallery, imageQuality: 85,
+                  source: ImageSource.gallery,
+                  imageQuality: 85,
                 );
                 if (picked != null && mounted) {
                   setState(() => _imageFile = File(picked.path));
@@ -158,22 +173,29 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
       // Image (optional — ส่งเฉพาะถ้าเลือกใหม่)
       if (_imageFile != null) {
-        final ext = path.extension(_imageFile!.path).toLowerCase().replaceAll('.', '');
+        final ext = path
+            .extension(_imageFile!.path)
+            .toLowerCase()
+            .replaceAll('.', '');
         final mimeType = ext == 'png' ? 'png' : 'jpeg';
-        request.files.add(await http.MultipartFile.fromPath(
-          'image',
-          _imageFile!.path,
-          contentType: MediaType('image', mimeType),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            _imageFile!.path,
+            contentType: MediaType('image', mimeType),
+          ),
+        );
       }
 
       // PDF (optional — ส่งเฉพาะถ้าเลือกใหม่)
       if (_pdfFile != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'pdf',
-          _pdfFile!.path,
-          contentType: MediaType('application', 'pdf'),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'pdf',
+            _pdfFile!.path,
+            contentType: MediaType('application', 'pdf'),
+          ),
+        );
       }
 
       final streamedResponse = await request.send();
@@ -191,19 +213,21 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
           );
           Navigator.pop(
-  context,
-  ProductItem(
-    id: widget.product.id,
-    title: name,
-    author: _authorController.text.trim(),
-    category: _selectedCategory ?? widget.product.category,
-    description: _describeController.text.trim(),
-    price: double.tryParse(_priceController.text.trim()) ?? 0.0,
-    imageUrl: _imageFile != null
-        ? _imageFile!.path
-        : widget.product.imageUrl, // ใช้ของเดิมที่ผ่าน fromJson มาแล้ว
-  ),
-);
+            context,
+            ProductItem(
+              id: widget.product.id,
+              title: name,
+              author: _authorController.text.trim(),
+              category: _selectedCategory ?? widget.product.category,
+              description: _describeController.text.trim(),
+              price: double.tryParse(_priceController.text.trim()) ?? 0.0,
+              imageUrl: _imageFile != null
+                  ? _imageFile!.path
+                  : widget
+                        .product
+                        .imageUrl, // ใช้ของเดิมที่ผ่าน fromJson มาแล้ว
+            ),
+          );
         }
       } else {
         _showSnack('แก้ไขไม่สำเร็จ (${response.statusCode})');
@@ -272,12 +296,20 @@ class _EditProductScreenState extends State<EditProductScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
             'Edit Products',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF00D13B)),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00D13B),
+            ),
           ),
         ],
       ),
@@ -285,104 +317,114 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Widget _buildImagePicker() {
-  return GestureDetector(
-    onTap: _pickImage,
-    child: Center(
-      child: Container(
-        width: 200,
-        height: 160,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEEEEE),
-          borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Center(
+        child: Container(
+          width: 200,
+          height: 160,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEEEEE),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: _imageFile != null
+              // แสดงรูปที่เลือกใหม่จากเครื่อง
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(_imageFile!, fit: BoxFit.cover),
+                )
+              // _buildImagePicker ใน edit_product_screen.dart
+              : widget.product.imageUrl.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    widget.product.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _addIcon(),
+                  ),
+                )
+              : _addIcon(),
         ),
-        child: _imageFile != null
-            // แสดงรูปที่เลือกใหม่จากเครื่อง
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(_imageFile!, fit: BoxFit.cover),
-              )
-            // _buildImagePicker ใน edit_product_screen.dart
-: widget.product.imageUrl.isNotEmpty
-    ? ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          widget.product.imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _addIcon(),
-        ),
-      )
-    : _addIcon(),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _addIcon() => const Column(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       Icon(Icons.add_photo_alternate_outlined, size: 36, color: Colors.black38),
       SizedBox(height: 6),
-      Text('Change Cover', style: TextStyle(fontSize: 12, color: Colors.black45)),
+      Text(
+        'Change Cover',
+        style: TextStyle(fontSize: 12, color: Colors.black45),
+      ),
     ],
   );
 
-Widget _buildPdfPicker() {
-  // ดึงชื่อไฟล์จาก pdfUrl เดิม
-  final existingPdfName = widget.product.imageUrl.isNotEmpty &&
-          _pdfFileName == null
-      ? null
-      : _pdfFileName;
+  Widget _buildPdfPicker() {
+    // แสดงชื่อไฟล์ PDF เดิมจาก server
+    final displayName =
+        _pdfFileName ??
+        (widget.product.pdfUrl.isNotEmpty
+            ? widget.product.pdfUrl.split('/').last
+            : null);
 
-  // แสดงชื่อไฟล์ PDF เดิมจาก server
-  final displayName = _pdfFileName ?? 
-      (widget.product.pdfUrl.isNotEmpty 
-          ? widget.product.pdfUrl.split('/').last 
-          : null);
-
-  return GestureDetector(
-    onTap: _pickPdf,
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.upload_file_rounded,
-            color: displayName == null ? Colors.black38 : const Color(0xFF006B3F),
-            size: 24,
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              displayName ?? 'Update PDF File (Optional)',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                color: displayName == null ? Colors.black54 : const Color(0xFF006B3F),
-                fontWeight: displayName == null ? FontWeight.normal : FontWeight.w600,
+    return GestureDetector(
+      onTap: _pickPdf,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.upload_file_rounded,
+              color: displayName == null
+                  ? Colors.black38
+                  : const Color(0xFF006B3F),
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                displayName ?? 'Update PDF File (Optional)',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: displayName == null
+                      ? Colors.black54
+                      : const Color(0xFF006B3F),
+                  fontWeight: displayName == null
+                      ? FontWeight.normal
+                      : FontWeight.w600,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _fieldLabel(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
-    child: Text(text, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 14, color: Colors.black87),
+    ),
   );
 
   Widget _textField(TextEditingController controller) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: TextField(
         controller: controller,
         style: const TextStyle(fontSize: 14),
@@ -396,7 +438,10 @@ Widget _buildPdfPicker() {
 
   Widget _multilineField(TextEditingController controller) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: TextField(
         controller: controller,
         maxLines: 5,
@@ -413,7 +458,10 @@ Widget _buildPdfPicker() {
     return SizedBox(
       width: 120,
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: TextField(
           controller: _priceController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -430,17 +478,27 @@ Widget _buildPdfPicker() {
 
   Widget _dropdown() {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(8),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedCategory,
           isExpanded: true,
-          hint: const Text('Select Category', style: TextStyle(fontSize: 14, color: Colors.black54)),
-          items: _categories.map((e) => DropdownMenuItem(
-            value: e,
-            child: Text(e, style: const TextStyle(fontSize: 14)),
-          )).toList(),
+          hint: const Text(
+            'Select Category',
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          items: _categories
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: const TextStyle(fontSize: 14)),
+                ),
+              )
+              .toList(),
           onChanged: (v) => setState(() => _selectedCategory = v),
         ),
       ),
@@ -460,14 +518,23 @@ Widget _buildPdfPicker() {
             disabledBackgroundColor: Colors.grey.shade400,
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
           child: _isSubmitting
               ? const SizedBox(
-                  height: 20, width: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                 )
-              : const Text('Edit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              : const Text(
+                  'Edit',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
         ),
       ),
     );
