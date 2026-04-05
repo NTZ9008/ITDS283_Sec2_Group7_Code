@@ -25,17 +25,21 @@ const List<Color> _bookColors = [
 
 class ProductCard extends StatefulWidget {
   final String title;
+  final String author;
   final String description;
   final double price;
   final String imageUrl;
-  final int index; // เพิ่ม index เพื่อเลือกสี
+  final int? bookId;
+  final int index;
 
   const ProductCard({
     super.key,
     required this.title,
+    this.author = '',
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.bookId,
     this.index = 0,
   });
 
@@ -88,10 +92,11 @@ class _ProductCardState extends State<ProductCard> {
           AppRoutes.productDetail,
           arguments: {
             'title': widget.title,
-            'author': 'Name Of Auther',
+            'author': widget.author.isNotEmpty ? widget.author : 'Unknown Author',
             'description': widget.description,
             'price': widget.price,
             'imageUrl': widget.imageUrl,
+            'bookId': widget.bookId,
           },
         );
       },
@@ -103,37 +108,41 @@ class _ProductCardState extends State<ProductCard> {
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            AspectRatio(
-              aspectRatio: 1.0,
+            SizedBox(
+              height: 140,
+              width: double.infinity,
               child: Container(
-                width: double.infinity,
                 decoration: BoxDecoration(
                   color: _bgColor,
-                  borderRadius: BorderRadius.zero,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: ClipRect(child: _buildImage()),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _buildImage(),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               widget.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               widget.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 10, color: Colors.grey),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
             const Divider(
               color: Color(0xFFF5D6C6),
               thickness: 1.0,
-              height: 15.0,
+              height: 10.0,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -233,25 +233,34 @@ class _ProductScreenState extends State<ProductScreen> {
       child: GridView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.50,
-          crossAxisSpacing: 15,
-          mainAxisSpacing: 15,
-        ),
+  crossAxisCount: 2,
+  childAspectRatio: 0.65, // เปลี่ยนจาก 0.50 เป็น 0.65
+  crossAxisSpacing: 15,
+  mainAxisSpacing: 15,
+),
         itemCount: books.length,
         itemBuilder: (context, index) {
-          final book = books[index];
-          return ProductCard(
-            title: book['title'] ?? '',
-            description: book['description'] ?? '',
-            price: (book['price'] is String
-                    ? double.tryParse(book['price']) 
-                    : book['price']?.toDouble()) ??
-                0.0,
-            imageUrl: book['image'] ?? book['imageUrl'] ?? book['image_url'] ?? '',
-            index: index,
-          );
-        },
+  final book = books[index];
+  
+  // เพิ่ม baseUrl ถ้า imageUrl ขึ้นต้นด้วย /uploads/
+  String imageUrl = book['imageUrl'] ?? book['image'] ?? book['image_url'] ?? '';
+  if (imageUrl.startsWith('/uploads/')) {
+    imageUrl = 'https://ebookapi.arlifzs.site$imageUrl';
+  }
+
+  return ProductCard(
+  title: book['title'] ?? '',
+  author: book['author'] ?? '',           // เพิ่ม
+  description: book['description'] ?? '',
+  price: (book['price'] is String
+          ? double.tryParse(book['price']) 
+          : book['price']?.toDouble()) ??
+      0.0,
+  imageUrl: imageUrl,
+  bookId: book['id'],                     // เพิ่ม
+  index: index,
+);
+},
       ),
     );
   }

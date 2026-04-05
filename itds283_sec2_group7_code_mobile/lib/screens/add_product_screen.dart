@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
@@ -5,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'my_products_screen.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -154,18 +158,23 @@ Future<void> _pickImage() async {
       request.fields['price'] = price.isEmpty ? '0' : price;
 
       // Image file (optional)
-      if (_imageFile != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'image',
-          _imageFile!.path,
-        ));
-      }
+      // Image file (optional)
+if (_imageFile != null) {
+  final ext = path.extension(_imageFile!.path).toLowerCase().replaceAll('.', '');
+  final mimeType = ext == 'png' ? 'png' : 'jpeg';
+  request.files.add(await http.MultipartFile.fromPath(
+    'image',
+    _imageFile!.path,
+    contentType: MediaType('image', mimeType),
+  ));
+}
 
-      // PDF file (required)
-      request.files.add(await http.MultipartFile.fromPath(
-        'pdf',
-        _pdfFile!.path,
-      ));
+// PDF file (required)
+request.files.add(await http.MultipartFile.fromPath(
+  'pdf',
+  _pdfFile!.path,
+  contentType: MediaType('application', 'pdf'),
+));
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
@@ -191,7 +200,8 @@ Future<void> _pickImage() async {
           );
         }
       } else {
-        _showSnack('เพิ่มหนังสือไม่สำเร็จ (${response.statusCode})');
+         final body = jsonDecode(response.body);
+  _showSnack(body['message'] ?? 'เพิ่มหนังสือไม่สำเร็จ');
       }
     } catch (e) {
       _showSnack('เกิดข้อผิดพลาด กรุณาลองใหม่');

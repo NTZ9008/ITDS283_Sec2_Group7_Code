@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'add_product_screen.dart';
 import 'edit_product_screen.dart';
 
+
 class ProductItem {
   final int? id;
   String title;
@@ -13,6 +14,7 @@ class ProductItem {
   String description;
   double price;
   String imageUrl;
+  String pdfUrl; // ✅ เพิ่ม
 
   ProductItem({
     this.id,
@@ -22,9 +24,18 @@ class ProductItem {
     required this.description,
     required this.price,
     this.imageUrl = '',
+    this.pdfUrl = '', // ✅ เพิ่ม
   });
 
   factory ProductItem.fromJson(Map<String, dynamic> json) {
+    const baseUrl = 'https://ebookapi.arlifzs.site';
+
+    String imageUrl = json['imageUrl'] ?? json['image'] ?? json['image_url'] ?? '';
+    if (imageUrl.startsWith('/uploads/')) imageUrl = '$baseUrl$imageUrl';
+
+    String pdfUrl = json['pdfUrl'] ?? ''; // ✅ เพิ่ม
+    if (pdfUrl.startsWith('/uploads/')) pdfUrl = '$baseUrl$pdfUrl'; // ✅ เพิ่ม
+
     return ProductItem(
       id: json['id'],
       title: json['title'] ?? '',
@@ -35,7 +46,8 @@ class ProductItem {
               ? double.tryParse(json['price'])
               : json['price']?.toDouble()) ??
           0.0,
-      imageUrl: json['image'] ?? json['imageUrl'] ?? json['image_url'] ?? '',
+      imageUrl: imageUrl,
+      pdfUrl: pdfUrl, // ✅ เพิ่ม
     );
   }
 }
@@ -83,11 +95,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List<dynamic> list =
-            data is List ? data : (data['books'] ?? data['data'] ?? []);
+        final List<dynamic> list = data is List
+            ? data
+            : (data['books'] ?? data['data'] ?? []);
+        for (var item in list) {
+          print('imageUrl from API: ${item['imageUrl']}');
+        }
         setState(() {
           _products = list.map((e) => ProductItem.fromJson(e)).toList();
         });
+        for (var p in _products) {
+          print('Final imageUrl: ${p.imageUrl}');
+        }
       } else {
         throw Exception('Server error: ${response.statusCode}');
       }
@@ -111,7 +130,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.black54),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -202,14 +224,15 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           children: [
             const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.black26),
             const SizedBox(height: 12),
-            Text(_errorMessage!,
-                style: const TextStyle(color: Colors.black54)),
+            Text(_errorMessage!, style: const TextStyle(color: Colors.black54)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _fetchMyBooks,
               icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text('ลองใหม่',
-                  style: TextStyle(color: Colors.white)),
+              label: const Text(
+                'ลองใหม่',
+                style: TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D13B),
               ),
@@ -242,8 +265,11 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios_new,
-                size: 18, color: Colors.black87),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
@@ -266,8 +292,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         children: [
           Icon(Icons.inventory_2_outlined, size: 64, color: Colors.black26),
           SizedBox(height: 12),
-          Text('No products yet',
-              style: TextStyle(fontSize: 16, color: Colors.black45)),
+          Text(
+            'No products yet',
+            style: TextStyle(fontSize: 16, color: Colors.black45),
+          ),
         ],
       ),
     );
@@ -286,25 +314,30 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               color: const Color(0xFFB2EEF4),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: product.imageUrl.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      product.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _bookIcon(),
-                    ),
-                  )
-                : _bookIcon(),
+            // _buildProductRow ใน my_products_screen.dart
+child: product.imageUrl.isNotEmpty
+    ? ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          product.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _bookIcon(),
+        ),
+      )
+    : _bookIcon(),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(
+                  product.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '฿${product.price.toStringAsFixed(2)}',
@@ -349,7 +382,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   Widget _bookIcon() {
-    return const Icon(Icons.menu_book_rounded,
-        color: Color(0xFF5B9BD5), size: 32);
+    return const Icon(
+      Icons.menu_book_rounded,
+      color: Color(0xFF5B9BD5),
+      size: 32,
+    );
   }
 }

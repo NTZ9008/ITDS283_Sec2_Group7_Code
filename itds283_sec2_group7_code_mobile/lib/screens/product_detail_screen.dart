@@ -11,6 +11,7 @@ class ProductDetailScreen extends StatefulWidget {
   final String description;
   final double price;
   final String imageUrl;
+  final int? bookId;          // เพิ่ม
 
   const ProductDetailScreen({
     super.key,
@@ -19,6 +20,7 @@ class ProductDetailScreen extends StatefulWidget {
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.bookId,               // เพิ่ม
   });
 
   @override

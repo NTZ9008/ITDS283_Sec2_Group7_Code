@@ -50,6 +50,18 @@ exports.createBook = async (data, sellerId) => {
     },
   });
 };
+// เพิ่มตรงนี้ก่อน exports.createBook
+exports.findBookByTitle = async (title, sellerId) => {
+  return await prisma.book.findFirst({
+    where: {
+      title: {
+        equals: title,
+        mode: 'insensitive', // ไม่สนใจตัวพิมพ์ใหญ่-เล็ก
+      },
+      sellerId: parseInt(sellerId),
+    },
+  });
+};
 
 exports.updateBook = async (id, data, sellerId) => {
   const existingBook = await prisma.book.findUnique({ where: { id: parseInt(id) } });
