@@ -4,6 +4,8 @@ import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/library_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 const List<Color> _bookBgColors = [
   Color(0xFFB2EEF4), // ฟ้า
@@ -25,17 +27,21 @@ const List<Color> _bookColors = [
 
 class ProductCard extends StatefulWidget {
   final String title;
+  final String author;
   final String description;
   final double price;
   final String imageUrl;
-  final int index; // เพิ่ม index เพื่อเลือกสี
+  final int? bookId;
+  final int index;
 
   const ProductCard({
     super.key,
     required this.title,
+    this.author = '',
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.bookId,
     this.index = 0,
   });
 
@@ -58,20 +64,16 @@ class _ProductCardState extends State<ProductCard> {
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
     } else {
-      return Image.network(
-        widget.imageUrl,
-        key: ValueKey(widget.imageUrl),
+      return CachedNetworkImage(
+        imageUrl: widget.imageUrl,
         fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF00D13B),
-              strokeWidth: 2,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) =>
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF00D13B),
+            strokeWidth: 2,
+          ),
+        ),
+        errorWidget: (context, url, error) =>
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
     }
@@ -88,10 +90,13 @@ class _ProductCardState extends State<ProductCard> {
           AppRoutes.productDetail,
           arguments: {
             'title': widget.title,
-            'author': 'Name Of Auther',
+            'author': widget.author.isNotEmpty
+                ? widget.author
+                : 'Unknown Author',
             'description': widget.description,
             'price': widget.price,
             'imageUrl': widget.imageUrl,
+            'bookId': widget.bookId,
           },
         );
       },
@@ -103,37 +108,41 @@ class _ProductCardState extends State<ProductCard> {
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            AspectRatio(
-              aspectRatio: 1.0,
+            SizedBox(
+              height: 140,
+              width: double.infinity,
               child: Container(
-                width: double.infinity,
                 decoration: BoxDecoration(
                   color: _bgColor,
-                  borderRadius: BorderRadius.zero,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: ClipRect(child: _buildImage()),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _buildImage(),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               widget.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               widget.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 10, color: Colors.grey),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
             const Divider(
               color: Color(0xFFF5D6C6),
               thickness: 1.0,
-              height: 15.0,
+              height: 10.0,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,6 +173,7 @@ class _ProductCardState extends State<ProductCard> {
                           description: widget.description,
                           price: widget.price,
                           imageUrl: widget.imageUrl,
+                          bookId: widget.bookId,
                         );
                       },
                       child: Icon(
@@ -177,10 +187,40 @@ class _ProductCardState extends State<ProductCard> {
                     const SizedBox(width: 5),
                     GestureDetector(
                       onTap: () {
+                        if (!AuthProviderWidget.of(context).isLoggedIn) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please login to add items to cart',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final isOwned = LibraryProviderWidget.of(
+                          context,
+                        ).items.any((item) => item.title == widget.title);
+
+                        if (isOwned) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'You already own "${widget.title}"',
+                              ),
+                              backgroundColor: Colors.blueAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+
                         CartProviderWidget.of(context).addItem(
                           title: widget.title,
                           price: widget.price,
                           imageUrl: widget.imageUrl,
+                          bookId: widget.bookId,
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

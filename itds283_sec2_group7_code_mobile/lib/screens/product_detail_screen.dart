@@ -4,6 +4,7 @@ import '../routes/app_routes.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/library_provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String title;
@@ -11,6 +12,7 @@ class ProductDetailScreen extends StatefulWidget {
   final String description;
   final double price;
   final String imageUrl;
+  final int? bookId;
 
   const ProductDetailScreen({
     super.key,
@@ -19,6 +21,7 @@ class ProductDetailScreen extends StatefulWidget {
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.bookId,
   });
 
   @override
@@ -112,7 +115,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildTitleRow() {
-    // 🛑 ดึงสถานะจาก FavoriteProvider ว่าหนังสือเล่มนี้ถูกกดถูกใจไว้หรือยัง
     final isFav = FavoriteProviderWidget.of(context).isFavorite(widget.title);
 
     return Padding(
@@ -146,6 +148,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 description: widget.description,
                 price: widget.price,
                 imageUrl: widget.imageUrl,
+                bookId: widget.bookId,
               );
             },
             child: Container(
@@ -156,9 +159,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               child: Icon(
                 isFav ? Remix.heart_3_fill : Remix.heart_3_line,
-                color: isFav
-                    ? Colors.redAccent
-                    : Colors.white, // เปลี่ยนสีเมื่อกด
+                color: isFav ? Colors.redAccent : Colors.white,
                 size: 20,
               ),
             ),
@@ -192,6 +193,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildDescribeSection() {
+    final libraryProvider = LibraryProviderWidget.of(context);
+    final int ownedBookIndex = libraryProvider.items.indexWhere(
+      (item) => item.title == widget.title,
+    );
+    final bool isOwned =
+        ownedBookIndex != -1;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -224,54 +232,140 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(width: 16),
           Column(
-            children: [
-              _buildButton(
-                'Add To Cart',
-                onTap: () {
-                  // 🛑 เพิ่มสินค้าลงใน CartProvider
-                  CartProviderWidget.of(context).addItem(
-                    title: widget.title,
-                    price: widget.price,
-                    imageUrl: widget.imageUrl,
-                  );
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Added "${widget.title}" to cart'),
-                      backgroundColor: const Color(0xFF00D13B),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+            children: isOwned
+                ? [
+                    _buildButton(
+                      'Read Now',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.read,
+                          arguments: {'bookIndex': ownedBookIndex},
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildButton(
-                'Buy Now',
-                onTap: () {
-                  // 🛑 ส่งข้อมูลสินค้าเล่มนี้ตรงไปที่หน้า Checkout ทันที
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.checkout,
-                    arguments: {
-                      'items': [
-                        {
-                          'title': widget.title,
-                          'price': widget.price,
-                          'quantity': 1,
-                        },
-                      ],
-                      'subtotal': widget.price,
-                      'discount': 0.0,
-                      'total': widget.price,
-                    },
-                  );
-                },
-              ),
-            ],
+                  ]
+                : [
+                    _buildButton(
+                      'Add To Cart',
+                      onTap: () {
+                        if (!AuthProviderWidget.of(context).isLoggedIn) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please login to add items to cart',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final cart = CartProviderWidget.of(context);
+                        final alreadyInCart = cart.items.any(
+                          (item) => item.title == widget.title,
+                        );
+
+                        if (alreadyInCart) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '"${widget.title}" is already in your cart',
+                              ),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        cart.addItem(
+                          title: widget.title,
+                          price: widget.price,
+                          imageUrl: widget.imageUrl,
+                          bookId: widget.bookId,
+                        );
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added "${widget.title}" to cart'),
+                            backgroundColor: const Color(0xFF00D13B),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildButton(
+                      'Buy Now',
+                      onTap: () async {
+                        if (!AuthProviderWidget.of(context).isLoggedIn) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please login to buy items'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final cart = CartProviderWidget.of(context);
+                        final alreadyInCart = cart.items.any(
+                          (item) => item.title == widget.title,
+                        );
+
+                        if (!alreadyInCart) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Preparing your order...'),
+                              backgroundColor: Colors.blueAccent,
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+
+                          await cart.addItem(
+                            title: widget.title,
+                            price: widget.price,
+                            imageUrl: widget.imageUrl,
+                            bookId: widget.bookId,
+                          );
+                        }
+
+                        final subtotal = cart.items.fold(
+                          0.0,
+                          (sum, item) => sum + item.price,
+                        );
+                        final checkoutItems = cart.items
+                            .map(
+                              (e) => {
+                                'title': e.title,
+                                'price': e.price,
+                                'quantity': e.quantity,
+                              },
+                            )
+                            .toList();
+
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.checkout,
+                          arguments: {
+                            'items': checkoutItems,
+                            'subtotal': subtotal,
+                            'discount': 0.0,
+                            'total': subtotal,
+                          },
+                        );
+                      },
+                    ),
+                  ],
           ),
         ],
       ),

@@ -1,15 +1,36 @@
 import 'package:flutter/material.dart';
 import '../providers/favorite_provider.dart';
-import '../routes/app_routes.dart'; // 🛑 1. นำเข้า AppRoutes สำหรับเปลี่ยนหน้า
+import '../routes/app_routes.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FavoriteProviderWidget.of(context).fetchFavorites();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // ดึงข้อมูลหนังสือที่ถูกใจมาจาก Provider
     final favProvider = FavoriteProviderWidget.of(context);
     final items = favProvider.items;
+
+    if (favProvider.isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -23,7 +44,7 @@ class FavoritesScreen extends StatelessWidget {
               child: items.isEmpty
                   ? const Center(
                       child: Text(
-                        "No favorites yet.",
+                        'No favorites yet.',
                         style: TextStyle(color: Colors.black54),
                       ),
                     )
@@ -43,20 +64,12 @@ class FavoritesScreen extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: Colors.black87,
-            ),
+            child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
           ),
           const SizedBox(height: 12),
           const Text(
             'My Favorites',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF00D13B),
-            ),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF00D13B)),
           ),
           const Text(
             'Invest in your future success.',
@@ -77,14 +90,25 @@ class FavoritesScreen extends StatelessWidget {
         mainAxisSpacing: 12,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) {
-        return _buildFavCard(items[index], context);
-      },
+      itemBuilder: (context, index) => _buildFavCard(items[index], context),
     );
   }
 
   Widget _buildFavCard(FavoriteItem item, BuildContext context) {
-    return Container(
+  return GestureDetector(
+    onTap: () => Navigator.pushNamed(
+      context,
+      AppRoutes.productDetail,
+      arguments: {
+        'title': item.title,
+        'author': '',
+        'description': item.description,
+        'price': item.price,
+        'imageUrl': item.imageUrl,
+        'bookId': item.bookId,
+      },
+    ),
+    child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -107,7 +131,7 @@ class FavoritesScreen extends StatelessWidget {
               color: const Color(0xFFB2EEF4),
               child: Image.network(
                 item.imageUrl,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const Icon(
                   Icons.menu_book_rounded,
                   color: Color(0xFF5B9BD5),
@@ -123,10 +147,7 @@ class FavoritesScreen extends StatelessWidget {
               children: [
                 Text(
                   item.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -142,15 +163,13 @@ class FavoritesScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '\$${item.price.toStringAsFixed(2)}',
+                      '฿${item.price.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF00D13B),
                       ),
                     ),
-
-                    // 🛑 2. แก้ไขปุ่มให้วิ่งไปหน้า Checkout แทนการ Add to Cart
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(
@@ -191,6 +210,7 @@ class FavoritesScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

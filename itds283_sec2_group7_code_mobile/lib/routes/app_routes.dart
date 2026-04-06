@@ -35,6 +35,7 @@ class AppRoutes {
           description: args['description'] ?? '',
           price: args['price'] ?? 0.0,
           imageUrl: args['imageUrl'] ?? '',
+          bookId: args['bookId'],
         );
       },
       checkout: (context) => const CheckoutScreen(),

@@ -16,6 +16,11 @@ exports.getAllBooks = async (query) => {
 
   return await prisma.book.findMany({
     where: whereClause,
+    include: {
+      _count: {
+        select: { orderItems: true }
+      }
+    },
     orderBy: { createdAt: 'desc' },
   });
 };
@@ -46,6 +51,18 @@ exports.createBook = async (data, sellerId) => {
       price: parseFloat(data.price),
       imageUrl: data.imageUrl || 'https://via.placeholder.com/150',
       pdfUrl: data.pdfUrl,
+      sellerId: parseInt(sellerId),
+    },
+  });
+};
+
+exports.findBookByTitle = async (title, sellerId) => {
+  return await prisma.book.findFirst({
+    where: {
+      title: {
+        equals: title,
+        mode: 'insensitive',
+      },
       sellerId: parseInt(sellerId),
     },
   });

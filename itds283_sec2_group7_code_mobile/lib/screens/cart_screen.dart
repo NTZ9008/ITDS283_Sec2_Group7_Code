@@ -15,12 +15,21 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final TextEditingController _promoController = TextEditingController();
-  
-  // อัปเดต: เก็บตัวเลขเปอร์เซ็นต์ส่วนลดที่ได้จาก Backend
+
   double _discountPercent = 0.0;
   String? _appliedPromoCode;
   bool _isLoadingPromo = false;
 
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = AuthProviderWidget.of(context);
+    if (auth.isLoggedIn) {
+      CartProviderWidget.of(context).fetchCart();
+    }
+  });
+}
   @override
   void dispose() {
     _promoController.dispose();
@@ -34,7 +43,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   double _calculateDiscount(double subtotal) {
-    // อัปเดต: คำนวณส่วนลดจาก % จริง
     return (subtotal > 0 && _discountPercent > 0) ? subtotal * (_discountPercent / 100) : 0;
   }
 
@@ -42,14 +50,23 @@ class _CartScreenState extends State<CartScreen> {
     return cart.items.isNotEmpty && cart.items.every((item) => item.selected);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cartProvider = CartProviderWidget.of(context);
-    final items = cartProvider.items;
+@override
+Widget build(BuildContext context) {
+  final cartProvider = CartProviderWidget.of(context);
 
-    final subtotal = _calculateSubtotal(cartProvider);
-    final discount = _calculateDiscount(subtotal);
-    final total = subtotal > 0 ? (subtotal - discount) : 0.0;
+  if (cartProvider.isLoading) {
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+      ),
+    );
+  }
+
+  final items = cartProvider.items;
+  final subtotal = _calculateSubtotal(cartProvider);
+  final discount = _calculateDiscount(subtotal);
+  final total = subtotal > 0 ? (subtotal - discount) : 0.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -470,7 +487,7 @@ class _CartScreenState extends State<CartScreen> {
                           'subtotal': subtotal,
                           'discount': discount,
                           'total': total,
-                          'promoCode': _appliedPromoCode, // ส่ง Promo ไปหน้า Checkout
+                          'promoCode': _appliedPromoCode,
                         },
                       );
                     }

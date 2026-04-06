@@ -162,6 +162,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
+      if (_phoneController.text.length != 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone number must be exactly 10 digits'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      if (_postalController.text.length != 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Postal code must be exactly 5 digits'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
       checkoutData['fullName'] = _nameController.text;
       checkoutData['phoneNumber'] = _phoneController.text;
       checkoutData['province'] = _provinceController.text;

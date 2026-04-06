@@ -29,7 +29,7 @@ class UserScreen extends StatelessWidget {
                     _sectionLabel('My Account'),
                     const SizedBox(height: 10),
                     auth.isLoggedIn
-                        ? _buildAccountCard(auth)
+                        ? _buildAccountCard(auth, context)
                         : _buildLoginButton(context),
                     const SizedBox(height: 24),
                     _sectionLabel('My Assets'),
@@ -44,16 +44,15 @@ class UserScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildMenuItem(
-                      label: 'My Librarys',
+                      label: 'My Library',
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (_) => const LibraryScreen()),
                       ),
                     ),
-                    
-                    // เพิ่มเงื่อนไขตรวจสอบว่า Login แล้ว และ Role เป็น Seller เท่านั้น
-                    if (auth.isLoggedIn && auth.role == 'seller') ...[
+
+                    if (auth.isLoggedIn && auth.role == 'SELLER') ...[
                       const SizedBox(height: 24),
                       _sectionLabel('Seller Zone'),
                       const SizedBox(height: 10),
@@ -79,6 +78,54 @@ class UserScreen extends StatelessWidget {
     );
   }
 
+  void _showEditNameDialog(BuildContext context, AuthProvider auth) {
+    final controller = TextEditingController(text: auth.username);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Edit Name'),
+        content: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F0F0),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(fontSize: 14),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(color: Colors.black54)),
+          ),
+          TextButton(
+            onPressed: () {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                auth.updateUsername(newName);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save',
+                style: TextStyle(
+                    color: Color(0xFF00D13B),
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _sectionLabel(String text) {
     final isTitle = text == 'User Info';
     return Text(
@@ -91,37 +138,45 @@ class UserScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountCard(AuthProvider auth) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
-            child: const Icon(Icons.person, color: Colors.black38, size: 30),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(auth.username,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Text(auth.email,
-                  style: const TextStyle(
-                      fontSize: 13, color: Colors.black54)),
-            ],
-          ),
-        ],
+  Widget _buildAccountCard(AuthProvider auth, BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showEditNameDialog(context, auth),
+      child: Container(
+        width: double.infinity,
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEEEEE),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                  color: Colors.white, shape: BoxShape.circle),
+              child: const Icon(Icons.person,
+                  color: Colors.black38, size: 30),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(auth.username,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(auth.email,
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.black54)),
+                ],
+              ),
+            ),
+            const Icon(Icons.edit, size: 18, color: Colors.black38),
+          ],
+        ),
       ),
     );
   }
@@ -143,7 +198,8 @@ class UserScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12)),
         ),
         child: const Text('Login',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style:
+                TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }

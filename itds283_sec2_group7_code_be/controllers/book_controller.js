@@ -35,13 +35,18 @@ const createBook = async (req, res) => {
   try {
     const sellerId = req.user.id;
     const bookData = { ...req.body };
-
-    if (req.files && req.files['image']) {
-      bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`; 
+    const existing = await bookService.findBookByTitle(bookData.title, sellerId);
+    if (existing) {
+      return res.status(400).json({ 
+        message: `มีหนังสือชื่อ "${bookData.title}" อยู่แล้ว กรุณาใช้ชื่ออื่น` 
+      });
     }
 
+    if (req.files && req.files['image']) {
+      bookData.imageUrl = `/uploads/${req.files['image'][0].filename}`;
+    }
     if (req.files && req.files['pdf']) {
-      bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`; 
+      bookData.pdfUrl = `/uploads/${req.files['pdf'][0].filename}`;
     }
 
     const newBook = await bookService.createBook(bookData, sellerId);
