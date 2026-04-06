@@ -43,8 +43,6 @@ class CartProvider extends ChangeNotifier {
 
   try {
     final token = await _getToken();
-    print('=== FETCH CART ===');
-    print('Token: $token');
 
     if (token == null) {
       _items = [];
@@ -56,15 +54,10 @@ class CartProvider extends ChangeNotifier {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
-
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final List<dynamic> list =
           data is List ? data : (data['cart'] ?? data['items'] ?? data['data'] ?? []);
-
-      print('Items count: ${list.length}');
 
       _items = list.map((e) {
         final book = e['book'] ?? e;
@@ -101,7 +94,6 @@ class CartProvider extends ChangeNotifier {
     required String imageUrl,
     int? bookId,
   }) async {
-    // เช็คซ้ำ local ก่อน
     final exists = _items.any((item) => item.title == title);
     if (exists) return;
 

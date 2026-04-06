@@ -114,7 +114,6 @@ class FavoriteProvider extends ChangeNotifier {
         final isFav = data['isFavorite'] ?? false;
 
         if (isFav) {
-          // เพิ่ม
           if (!isFavorite(title)) {
             String resolvedUrl = imageUrl;
             if (resolvedUrl.startsWith('/uploads/')) {
@@ -129,7 +128,6 @@ class FavoriteProvider extends ChangeNotifier {
             ));
           }
         } else {
-          // ลบ
           _items.removeWhere((item) => item.title == title);
         }
         notifyListeners();

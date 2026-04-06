@@ -124,7 +124,6 @@ Future<void> _pickImage() async {
     final describe = _describeController.text.trim();
     final price = _priceController.text.trim();
 
-    // Validation
     if (name.isEmpty) {
       _showSnack('Please enter a product name');
       return;
@@ -147,18 +146,13 @@ Future<void> _pickImage() async {
         Uri.parse('$_baseUrl/books'),
       );
 
-      // Headers
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Fields
       request.fields['title'] = name;
       request.fields['author'] = author;
       request.fields['category'] = _selectedCategory!;
       request.fields['description'] = describe;
       request.fields['price'] = price.isEmpty ? '0' : price;
-
-      // Image file (optional)
-      // Image file (optional)
 if (_imageFile != null) {
   final ext = path.extension(_imageFile!.path).toLowerCase().replaceAll('.', '');
   final mimeType = ext == 'png' ? 'png' : 'jpeg';
@@ -169,7 +163,6 @@ if (_imageFile != null) {
   ));
 }
 
-// PDF file (required)
 request.files.add(await http.MultipartFile.fromPath(
   'pdf',
   _pdfFile!.path,
@@ -187,7 +180,6 @@ request.files.add(await http.MultipartFile.fromPath(
               backgroundColor: Color(0xFF00D13B),
             ),
           );
-          // ส่ง ProductItem กลับเพื่อให้ MyProductsScreen รู้ว่าต้อง reload
           Navigator.pop(
             context,
             ProductItem(

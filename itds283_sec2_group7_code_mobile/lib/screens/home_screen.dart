@@ -324,12 +324,11 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFA5D6A7), // สีพื้นหลังการ์ดสีเขียวอ่อนตามแบบ
+            color: const Color(0xFFA5D6A7),
             borderRadius: BorderRadius.circular(15),
           ),
           child: Row(
             children: [
-              // ฝั่งซ้าย: ข้อมูลหนังสือ และปุ่ม Shop Now
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

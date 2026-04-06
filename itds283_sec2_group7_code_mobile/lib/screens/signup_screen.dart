@@ -80,7 +80,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Network error: $e'),
+          content: Text('Network error: Please connect to internet!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -89,18 +89,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  // 🛑 ฟังก์ชันเปิดปฏิทินให้เลือกวันเกิด
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000), // ค่าเริ่มต้นปี 2000
-      firstDate: DateTime(1900), // ย้อนหลังได้ถึงปี 1900
-      lastDate: DateTime.now(), // ห้ามเลือกอนาคต
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2B58F6), // สีปุ่มและหัวปฏิทิน
+              primary: Color(0xFF2B58F6),
             ),
           ),
           child: child!,
@@ -156,7 +155,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _buildTextField(_lastNameController, 'Last Name'),
                     _buildTextField(_emailController, 'Email Address'),
 
-                    // 🛑 ครอบด้วย GestureDetector และ AbsorbPointer เพื่อให้กดแล้วคีย์บอร์ดไม่เด้ง แต่ปฏิทินเด้งแทน
                     GestureDetector(
                       onTap: () => _selectDate(context),
                       child: AbsorbPointer(

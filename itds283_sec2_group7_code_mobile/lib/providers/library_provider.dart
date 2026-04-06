@@ -53,7 +53,6 @@ class LibraryProvider extends ChangeNotifier {
     return prefs.getString('token') ?? prefs.getString('seller_token');
   }
 
-  // เช็คไฟล์จริงในเครื่องและอัปเดตสถานะ
   Future<void> _syncWithFileSystem() async {
     try {
       final dir = await getApplicationDocumentsDirectory();

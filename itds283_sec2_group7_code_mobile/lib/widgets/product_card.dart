@@ -64,7 +64,6 @@ class _ProductCardState extends State<ProductCard> {
             _BookPlaceholder(bgColor: _bgColor, bookColor: _bookColor),
       );
     } else {
-      // 🛑 เปลี่ยนมาใช้ CachedNetworkImage เพื่อให้ออฟไลน์ดูได้
       return CachedNetworkImage(
         imageUrl: widget.imageUrl,
         fit: BoxFit.cover,
@@ -188,7 +187,6 @@ class _ProductCardState extends State<ProductCard> {
                     const SizedBox(width: 5),
                     GestureDetector(
                       onTap: () {
-                        // 1. ดักให้ล็อกอินก่อน
                         if (!AuthProviderWidget.of(context).isLoggedIn) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -201,7 +199,6 @@ class _ProductCardState extends State<ProductCard> {
                           return;
                         }
 
-                        // 🛑 2. ดักว่าถ้ามีในคลังแล้ว ห้ามเอาลงตะกร้า
                         final isOwned = LibraryProviderWidget.of(
                           context,
                         ).items.any((item) => item.title == widget.title);
@@ -219,7 +216,6 @@ class _ProductCardState extends State<ProductCard> {
                           return;
                         }
 
-                        // 3. ถ้าผ่านฉลุย ค่อยโยนลงตะกร้า
                         CartProviderWidget.of(context).addItem(
                           title: widget.title,
                           price: widget.price,

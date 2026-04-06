@@ -14,7 +14,6 @@ class _ProductScreenState extends State<ProductScreen> {
   int _selectedCategoryIndex = 0;
   List<Map<String, dynamic>> _allBooks = [];
 
-  // 🛑 ล็อกหมวดหมู่วิชาไว้ตายตัวตามหน้า Home
   final List<String> _categories = [
     'All',
     'Finance',
@@ -53,7 +52,6 @@ class _ProductScreenState extends State<ProductScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // รองรับทั้ง [] และ { books: [] } และ { data: [] }
         final List<dynamic> list = data is List
             ? data
             : (data['books'] ?? data['data'] ?? []);
@@ -62,7 +60,6 @@ class _ProductScreenState extends State<ProductScreen> {
 
         setState(() {
           _allBooks = books;
-          // 🛑 ลบโค้ดส่วนที่สร้าง _categories อัตโนมัติทิ้งไปแล้ว ใช้ค่าคงที่แทน
           _isLoading = false;
         });
       } else {
@@ -70,7 +67,7 @@ class _ProductScreenState extends State<ProductScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่\n($e)';
+        _errorMessage = 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่';
         _isLoading = false;
       });
     }
@@ -229,7 +226,6 @@ class _ProductScreenState extends State<ProductScreen> {
       );
     }
 
-    // มี RefreshIndicator อยู่แล้ว สามารถดึงลงเพื่อ Refresh ได้เลย
     return RefreshIndicator(
       color: const Color(0xFF00D13B),
       onRefresh: _fetchBooks,
@@ -245,7 +241,6 @@ class _ProductScreenState extends State<ProductScreen> {
         itemBuilder: (context, index) {
           final book = books[index];
 
-          // เพิ่ม baseUrl ถ้า imageUrl ขึ้นต้นด้วย /uploads/
           String imageUrl =
               book['imageUrl'] ?? book['image'] ?? book['image_url'] ?? '';
           if (imageUrl.startsWith('/uploads/')) {
@@ -262,7 +257,7 @@ class _ProductScreenState extends State<ProductScreen> {
                     : book['price']?.toDouble()) ??
                 0.0,
             imageUrl: imageUrl,
-            bookId: book['id'], // เพิ่ม
+            bookId: book['id'],
             index: index,
           );
         },

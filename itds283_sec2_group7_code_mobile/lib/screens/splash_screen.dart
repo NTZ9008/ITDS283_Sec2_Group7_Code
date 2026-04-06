@@ -23,10 +23,8 @@ class _SplashScreenState extends State<SplashScreen> {
       final auth = AuthProviderWidget.of(context);
 
       if (auth.isLoggedIn) {
-        // ถ้าล็อคอินอยู่แล้ว (ไม่ว่าจะด้วย Google หรือ Backend) ไปหน้า Main
         Navigator.pushReplacementNamed(context, AppRoutes.main);
       } else {
-        // ถ้ายังไม่ล็อคอิน ไปหน้า Login
         Navigator.pushReplacementNamed(context, AppRoutes.login);
       }
     }

@@ -35,8 +35,6 @@ const createBook = async (req, res) => {
   try {
     const sellerId = req.user.id;
     const bookData = { ...req.body };
-
-    // ✅ เช็คชื่อซ้ำ
     const existing = await bookService.findBookByTitle(bookData.title, sellerId);
     if (existing) {
       return res.status(400).json({ 

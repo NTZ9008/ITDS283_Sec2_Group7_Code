@@ -15,8 +15,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final TextEditingController _promoController = TextEditingController();
-  
-  // อัปเดต: เก็บตัวเลขเปอร์เซ็นต์ส่วนลดที่ได้จาก Backend
+
   double _discountPercent = 0.0;
   String? _appliedPromoCode;
   bool _isLoadingPromo = false;
@@ -44,7 +43,6 @@ void initState() {
   }
 
   double _calculateDiscount(double subtotal) {
-    // อัปเดต: คำนวณส่วนลดจาก % จริง
     return (subtotal > 0 && _discountPercent > 0) ? subtotal * (_discountPercent / 100) : 0;
   }
 
@@ -56,7 +54,6 @@ void initState() {
 Widget build(BuildContext context) {
   final cartProvider = CartProviderWidget.of(context);
 
-  // แสดง loading
   if (cartProvider.isLoading) {
     return const Scaffold(
       backgroundColor: Colors.white,
@@ -490,7 +487,7 @@ Widget build(BuildContext context) {
                           'subtotal': subtotal,
                           'discount': discount,
                           'total': total,
-                          'promoCode': _appliedPromoCode, // ส่ง Promo ไปหน้า Checkout
+                          'promoCode': _appliedPromoCode,
                         },
                       );
                     }

@@ -145,7 +145,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
       return;
     }
 
-    // ต้องมี id เพื่อส่ง PUT
     if (widget.product.id == null) {
       _showSnack('ไม่พบ ID หนังสือ ไม่สามารถแก้ไขได้');
       return;
@@ -162,7 +161,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Fields
       request.fields['title'] = name;
       request.fields['author'] = _authorController.text.trim();
       request.fields['category'] = _selectedCategory ?? widget.product.category;
@@ -171,7 +169,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
           ? '0'
           : _priceController.text.trim();
 
-      // Image (optional — ส่งเฉพาะถ้าเลือกใหม่)
       if (_imageFile != null) {
         final ext = path
             .extension(_imageFile!.path)
@@ -187,7 +184,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
         );
       }
 
-      // PDF (optional — ส่งเฉพาะถ้าเลือกใหม่)
       if (_pdfFile != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -200,9 +196,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
 
       if (response.statusCode == 200) {
         if (mounted) {
@@ -328,12 +321,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: _imageFile != null
-              // แสดงรูปที่เลือกใหม่จากเครื่อง
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.file(_imageFile!, fit: BoxFit.cover),
                 )
-              // _buildImagePicker ใน edit_product_screen.dart
               : widget.product.imageUrl.isNotEmpty
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -362,7 +353,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
   );
 
   Widget _buildPdfPicker() {
-    // แสดงชื่อไฟล์ PDF เดิมจาก server
     final displayName =
         _pdfFileName ??
         (widget.product.pdfUrl.isNotEmpty

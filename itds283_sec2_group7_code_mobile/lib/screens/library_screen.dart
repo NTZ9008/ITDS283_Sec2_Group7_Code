@@ -165,7 +165,6 @@ class _LibraryBookCardState extends State<_LibraryBookCard> {
         );
       }
     } else {
-      // 🛑 ดาวน์โหลดไฟล์จริงลงเครื่อง
       if (_isDownloading) return;
 
       setState(() => _isDownloading = true);
@@ -271,8 +270,8 @@ class _LibraryBookCardState extends State<_LibraryBookCard> {
                   : Icon(
                       widget.book.isDownloaded
                           ? Remix
-                                .checkbox_circle_fill // โหลดแล้ว (ติ๊กถูกสีเขียว)
-                          : Remix.download_cloud_2_line, // ยังไม่โหลด (เมฆ)
+                                .checkbox_circle_fill
+                          : Remix.download_cloud_2_line,
                       size: 20,
                       color: widget.book.isDownloaded
                           ? const Color(0xFF00D13B)

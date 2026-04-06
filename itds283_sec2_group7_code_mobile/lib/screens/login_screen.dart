@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _showError(data['message'] ?? 'Login failed');
       }
     } catch (e) {
-      _showError('Network error: $e');
+      _showError('Network error: Please connect to internet!');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      _showError("Google Sign-In Failed: $e");
+      _showError("Google Sign-In Failed: Please try again!");
     }
   }
 

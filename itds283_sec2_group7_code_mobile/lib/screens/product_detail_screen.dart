@@ -193,13 +193,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildDescribeSection() {
-    // 🛑 ดึงข้อมูล Library มาเช็คว่ามีหนังสือเล่มนี้ (อิงจากชื่อ) อยู่แล้วหรือยัง
     final libraryProvider = LibraryProviderWidget.of(context);
     final int ownedBookIndex = libraryProvider.items.indexWhere(
       (item) => item.title == widget.title,
     );
     final bool isOwned =
-        ownedBookIndex != -1; // ถ้าไม่เท่ากับ -1 แปลว่ามีของแล้ว
+        ownedBookIndex != -1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -235,7 +234,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Column(
             children: isOwned
                 ? [
-                    // 🛑 ถ้าเคยซื้อแล้ว ให้แสดงปุ่ม Read Now แทน
                     _buildButton(
                       'Read Now',
                       onTap: () {
@@ -248,7 +246,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ]
                 : [
-                    // 🛑 ถ้ายังไม่เคยซื้อ ก็โชว์ปุ่ม Add To Cart กับ Buy Now ตามปกติ
                     _buildButton(
                       'Add To Cart',
                       onTap: () {

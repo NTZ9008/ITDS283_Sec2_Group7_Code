@@ -17,7 +17,6 @@ class AuthProvider extends ChangeNotifier {
   String? get token => _token;
   String get role => _role;
 
-  // 🛑 รับค่าที่โหลดเสร็จแล้วจาก main.dart เข้ามาใช้งานเลย
   AuthProvider({
     bool isLoggedIn = false,
     String username = 'Guest',
@@ -56,10 +55,6 @@ class AuthProvider extends ChangeNotifier {
     final firstName = parts.first;
     final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
-    print('=== UPDATE PROFILE ===');
-    print('token: $token');
-    print('firstName: $firstName, lastName: $lastName');
-
     final response = await http.put(
       Uri.parse('https://ebookapi.arlifzs.site/api/users/profile'),
       headers: {
@@ -71,9 +66,6 @@ class AuthProvider extends ChangeNotifier {
         'lastName': lastName,
       }),
     );
-
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
 
     if (response.statusCode == 200) {
       _username = newName;

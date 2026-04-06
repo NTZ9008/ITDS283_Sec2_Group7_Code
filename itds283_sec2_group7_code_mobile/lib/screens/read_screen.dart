@@ -4,7 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:cached_network_image/cached_network_image.dart'; // 🛑 เพิ่มแพ็กเกจนี้
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/library_provider.dart';
 
 class ReadScreen extends StatefulWidget {
@@ -24,7 +24,7 @@ class _ReadScreenState extends State<ReadScreen> {
   final Set<int> _bookmarkedPages = {};
   bool _isDownloading = false;
   File? _localFile;
-  bool _isCheckingFile = true; // 🛑 เพิ่มตัวแปรดักรอโหลดไฟล์
+  bool _isCheckingFile = true;
 
   @override
   void initState() {
@@ -52,7 +52,6 @@ class _ReadScreenState extends State<ReadScreen> {
         print("Error reading local file: $e");
       }
     }
-    // 🛑 ตรวจสอบไฟล์เสร็จแล้ว ค่อยอนุญาตให้แอปเรนเดอร์ PDF
     if (mounted) setState(() => _isCheckingFile = false); 
   }
 
@@ -116,7 +115,6 @@ class _ReadScreenState extends State<ReadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🛑 โชว์หน้าโหลดไปก่อน จนกว่าจะหาไฟล์ในเครื่องเสร็จ (แก้ปัญหาแอปพังตอนออฟไลน์)
     if (_isCheckingFile) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -221,7 +219,6 @@ class _ReadScreenState extends State<ReadScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 🛑 เปลี่ยนมาใช้ CachedNetworkImage
                         CachedNetworkImage(
                           imageUrl: book.imageUrl,
                           fit: BoxFit.contain,
@@ -243,7 +240,6 @@ class _ReadScreenState extends State<ReadScreen> {
                   ),
           ),
 
-          // Top bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -337,7 +333,6 @@ class _ReadScreenState extends State<ReadScreen> {
                               },
                             ),
                           ),
-                          // จุด Bookmark บน Slider
                           ..._bookmarkedPages.map((page) {
                             final double percent = _totalPages > 1 ? (page - 1) / (_totalPages - 1) : 0;
                             const double padding = 24.0; 

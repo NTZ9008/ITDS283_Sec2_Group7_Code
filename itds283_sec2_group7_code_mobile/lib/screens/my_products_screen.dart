@@ -14,7 +14,7 @@ class ProductItem {
   String description;
   double price;
   String imageUrl;
-  String pdfUrl; // ✅ เพิ่ม
+  String pdfUrl;
 
   ProductItem({
     this.id,
@@ -24,7 +24,7 @@ class ProductItem {
     required this.description,
     required this.price,
     this.imageUrl = '',
-    this.pdfUrl = '', // ✅ เพิ่ม
+    this.pdfUrl = '',
   });
 
   factory ProductItem.fromJson(Map<String, dynamic> json) {
@@ -33,8 +33,8 @@ class ProductItem {
     String imageUrl = json['imageUrl'] ?? json['image'] ?? json['image_url'] ?? '';
     if (imageUrl.startsWith('/uploads/')) imageUrl = '$baseUrl$imageUrl';
 
-    String pdfUrl = json['pdfUrl'] ?? ''; // ✅ เพิ่ม
-    if (pdfUrl.startsWith('/uploads/')) pdfUrl = '$baseUrl$pdfUrl'; // ✅ เพิ่ม
+    String pdfUrl = json['pdfUrl'] ?? '';
+    if (pdfUrl.startsWith('/uploads/')) pdfUrl = '$baseUrl$pdfUrl';
 
     return ProductItem(
       id: json['id'],
@@ -47,7 +47,7 @@ class ProductItem {
               : json['price']?.toDouble()) ??
           0.0,
       imageUrl: imageUrl,
-      pdfUrl: pdfUrl, // ✅ เพิ่ม
+      pdfUrl: pdfUrl,
     );
   }
 }
