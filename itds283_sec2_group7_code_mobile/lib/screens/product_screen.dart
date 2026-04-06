@@ -63,7 +63,7 @@ class _ProductScreenState extends State<ProductScreen> {
           _isLoading = false;
         });
       } else {
-        throw Exception('Server error: ${response.statusCode}');
+        throw Exception('Server error: server error!');
       }
     } catch (e) {
       setState(() {
