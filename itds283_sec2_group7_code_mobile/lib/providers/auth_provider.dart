@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthProvider extends ChangeNotifier {
   bool _isLoggedIn = false;
@@ -44,6 +46,44 @@ class AuthProvider extends ChangeNotifier {
       }
     });
   }
+
+ Future<void> updateUsername(String newName) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? prefs.getString('seller_token') ?? '';
+
+    final parts = newName.trim().split(' ');
+    final firstName = parts.first;
+    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+    print('=== UPDATE PROFILE ===');
+    print('token: $token');
+    print('firstName: $firstName, lastName: $lastName');
+
+    final response = await http.put(
+      Uri.parse('https://ebookapi.arlifzs.site/api/users/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'firstName': firstName,
+        'lastName': lastName,
+      }),
+    );
+
+    print('Status: ${response.statusCode}');
+    print('Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      _username = newName;
+      prefs.setString('username', newName);
+      notifyListeners();
+    }
+  } catch (e) {
+    print('updateUsername error: $e');
+  }
+}
 
   Future<void> login(
     String name,

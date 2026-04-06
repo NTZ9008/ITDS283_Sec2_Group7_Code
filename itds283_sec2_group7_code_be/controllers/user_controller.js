@@ -151,10 +151,31 @@ const updateReadingProgress = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { firstName, lastName } = req.body;
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { firstName, lastName },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      },
+    });
+    return res.status(200).json({ message: 'Profile updated', user: updated });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUserProfile,
   getFavorites,
   toggleFavorite,
   getLibrary,
   updateReadingProgress,
+  updateProfile,
 };

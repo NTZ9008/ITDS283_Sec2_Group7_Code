@@ -12,5 +12,6 @@ router.post('/favorites/toggle', userController.toggleFavorite);
 
 router.get('/library', userController.getLibrary);
 router.put('/library/:bookId/progress', userController.updateReadingProgress);
+router.put('/profile', userController.updateProfile);
 
 module.exports = router;
