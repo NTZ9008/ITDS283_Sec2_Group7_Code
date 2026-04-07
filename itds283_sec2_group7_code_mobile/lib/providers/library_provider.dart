@@ -34,7 +34,7 @@ class LibraryItem {
         'author': author,
         'imageUrl': imageUrl,
         'pdfUrl': pdfUrl,
-      }
+      },
     };
   }
 }
@@ -72,7 +72,9 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> _saveOfflineCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String jsonData = jsonEncode(_items.map((e) => e.toJson()).toList());
+      final String jsonData = jsonEncode(
+        _items.map((e) => e.toJson()).toList(),
+      );
       await prefs.setString(_offlineKey, jsonData);
     } catch (e) {
       print('Error saving offline cache: $e');
@@ -126,10 +128,12 @@ class LibraryProvider extends ChangeNotifier {
         return;
       }
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/users/library'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(const Duration(seconds: 8));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/users/library'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -138,15 +142,35 @@ class LibraryProvider extends ChangeNotifier {
             : (data['library'] ?? data['items'] ?? data['data'] ?? []);
 
         _items = _parseItems(list);
-        await _syncWithFileSystem(); 
+        await _syncWithFileSystem();
         await _saveOfflineCache();
       }
     } catch (e) {
       print('fetchLibrary error: $e');
-      await _syncWithFileSystem(); 
+      await _syncWithFileSystem();
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> clearAllOfflineData() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final files = dir.listSync();
+      for (var file in files) {
+        if (file is File && file.path.endsWith('.pdf')) {
+          await file.delete();
+        }
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_offlineKey);
+
+      _items = [];
+      notifyListeners();
+    } catch (e) {
+      print("Clear Offline Data Error: $e");
     }
   }
 
@@ -154,11 +178,13 @@ class LibraryProvider extends ChangeNotifier {
     for (var item in newItems) {
       bool isExist = _items.any((e) => e.title == item['title']);
       if (!isExist) {
-        _items.add(LibraryItem(
-          title: item['title'] ?? '',
-          author: item['author'] ?? '',
-          imageUrl: item['imageUrl'] ?? '',
-        ));
+        _items.add(
+          LibraryItem(
+            title: item['title'] ?? '',
+            author: item['author'] ?? '',
+            imageUrl: item['imageUrl'] ?? '',
+          ),
+        );
       }
     }
     _syncWithFileSystem();
