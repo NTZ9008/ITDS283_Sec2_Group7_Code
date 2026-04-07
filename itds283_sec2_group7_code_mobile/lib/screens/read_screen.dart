@@ -5,6 +5,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/library_provider.dart';
 
 class ReadScreen extends StatefulWidget {
@@ -39,6 +40,20 @@ class _ReadScreenState extends State<ReadScreen> {
     final libraryProvider = LibraryProviderWidget.of(context);
     final book = libraryProvider.items[widget.bookIndex];
     
+    // 🛑 โหลด Bookmark เก่าที่เคยเซฟไว้ในเครื่อง
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bookmarkKey = 'bookmarks_${book.bookId ?? book.title}';
+      final savedBookmarks = prefs.getStringList(bookmarkKey);
+      if (savedBookmarks != null && mounted) {
+        setState(() {
+          _bookmarkedPages.addAll(savedBookmarks.map(int.parse));
+        });
+      }
+    } catch (e) {
+      print("Load Bookmark Error: $e");
+    }
+
     if (book.pdfUrl.isNotEmpty) {
       try {
         final dir = await getApplicationDocumentsDirectory();
@@ -52,7 +67,22 @@ class _ReadScreenState extends State<ReadScreen> {
         print("Error reading local file: $e");
       }
     }
+    
     if (mounted) setState(() => _isCheckingFile = false); 
+  }
+
+  // 🛑 ฟังก์ชันเซฟ Bookmark ลงเครื่อง
+  Future<void> _saveBookmarks() async {
+    final libraryProvider = LibraryProviderWidget.of(context);
+    final book = libraryProvider.items[widget.bookIndex];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bookmarkKey = 'bookmarks_${book.bookId ?? book.title}';
+      final stringList = _bookmarkedPages.map((e) => e.toString()).toList();
+      await prefs.setStringList(bookmarkKey, stringList);
+    } catch (e) {
+      print("Save Bookmark Error: $e");
+    }
   }
 
   void _toggleControls() {
@@ -126,6 +156,9 @@ class _ReadScreenState extends State<ReadScreen> {
     final book = libraryProvider.items[widget.bookIndex];
     final bool isDownloaded = _localFile != null;
     final bool isCurrentPageBookmarked = _bookmarkedPages.contains(_currentPage);
+    
+    // 🛑 เรียงหน้า Bookmark เพื่อให้จุดไข่ปลาบน Slider แสดงผลเรียงตามลำดับหน้า
+    final sortedBookmarks = _bookmarkedPages.toList()..sort();
 
     return Scaffold(
       key: _scaffoldKey,
@@ -279,6 +312,7 @@ class _ReadScreenState extends State<ReadScreen> {
                           _bookmarkedPages.add(_currentPage);
                         }
                       });
+                      _saveBookmarks(); // 🛑 สั่งเซฟลงเครื่องทันทีที่กดเข้า-ออก Bookmark
                     },
                     child: Icon(
                       isCurrentPageBookmarked ? Remix.bookmark_fill : Remix.bookmark_line,
@@ -333,7 +367,8 @@ class _ReadScreenState extends State<ReadScreen> {
                               },
                             ),
                           ),
-                          ..._bookmarkedPages.map((page) {
+                          // 🛑 ใช้ array ที่ถูกจัดเรียงแล้วมาโชว์จุด
+                          ...sortedBookmarks.map((page) {
                             final double percent = _totalPages > 1 ? (page - 1) / (_totalPages - 1) : 0;
                             const double padding = 24.0; 
                             final double availableWidth = constraints.maxWidth - (padding * 2);
