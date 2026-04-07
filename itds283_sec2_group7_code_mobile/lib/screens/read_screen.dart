@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/library_provider.dart';
-import '../providers/auth_provider.dart'; // 🛑 เพิ่ม Import ตัวนี้เพื่อดึงข้อมูล User ปัจจุบัน
+import '../providers/auth_provider.dart';
 
 class ReadScreen extends StatefulWidget {
   final int bookIndex;
@@ -41,13 +41,10 @@ class _ReadScreenState extends State<ReadScreen> {
     final libraryProvider = LibraryProviderWidget.of(context);
     final authProvider = AuthProviderWidget.of(
       context,
-    ); // 🛑 ดึงข้อมูล User ปัจจุบัน
+    );
     final book = libraryProvider.items[widget.bookIndex];
-
-    // โหลด Bookmark โดยแยกตามชื่อ User และชื่อหนังสือ
     try {
       final prefs = await SharedPreferences.getInstance();
-      // 🛑 ผูก username เข้ากับ Key เช่น: bookmarks_Arlif_Math101
       final bookmarkKey =
           'bookmarks_${authProvider.username}_${book.bookId ?? book.title}';
       final savedBookmarks = prefs.getStringList(bookmarkKey);
@@ -77,16 +74,14 @@ class _ReadScreenState extends State<ReadScreen> {
     if (mounted) setState(() => _isCheckingFile = false);
   }
 
-  // เซฟ Bookmark โดยแยกตามชื่อ User และชื่อหนังสือ
   Future<void> _saveBookmarks() async {
     final libraryProvider = LibraryProviderWidget.of(context);
     final authProvider = AuthProviderWidget.of(
       context,
-    ); // 🛑 ดึงข้อมูล User ปัจจุบัน
+    );
     final book = libraryProvider.items[widget.bookIndex];
     try {
       final prefs = await SharedPreferences.getInstance();
-      // 🛑 ผูก username เข้ากับ Key เหมือนตอนโหลด
       final bookmarkKey =
           'bookmarks_${authProvider.username}_${book.bookId ?? book.title}';
       final stringList = _bookmarkedPages.map((e) => e.toString()).toList();

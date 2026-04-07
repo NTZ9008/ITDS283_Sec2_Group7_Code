@@ -246,7 +246,6 @@ class UserScreen extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context, AuthProvider auth) {
-    // 🛑 ดึง Provider ของ Library มารอไว้ก่อนเลย
     final libraryProvider = LibraryProviderWidget.of(context);
 
     return Padding(
@@ -273,23 +272,9 @@ class UserScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () async {
-                      // 🛑 1. ปิดหน้าต่าง Dialog ก่อน
                       Navigator.pop(context);
-
-                      // 🛑 2. สั่งลบไฟล์ PDF ที่โหลดไว้ทั้งหมด + ล้างแคชทิ้ง
                       await libraryProvider.clearAllOfflineData();
-
-                      // 🛑 3. ล็อกเอาท์
                       auth.logout();
-
-                      // 🛑 4. เตะกลับไปหน้า Splash/Login เพื่อเริ่มแอปใหม่
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/',
-                          (route) => false,
-                        );
-                      }
                     },
                     child: const Text(
                       'Logout',
