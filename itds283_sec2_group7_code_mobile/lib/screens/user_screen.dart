@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/auth_provider.dart';
+import '../providers/library_provider.dart';
 import 'favorites_screen.dart';
 import 'library_screen.dart';
 import 'login_screen.dart';
@@ -39,7 +40,8 @@ class UserScreen extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const FavoritesScreen()),
+                          builder: (_) => const FavoritesScreen(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -48,7 +50,8 @@ class UserScreen extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const LibraryScreen()),
+                          builder: (_) => const LibraryScreen(),
+                        ),
                       ),
                     ),
 
@@ -61,7 +64,8 @@ class UserScreen extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const MyProductsScreen()),
+                            builder: (_) => const MyProductsScreen(),
+                          ),
                         ),
                       ),
                     ],
@@ -83,8 +87,7 @@ class UserScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Edit Name'),
         content: Container(
           decoration: BoxDecoration(
@@ -97,16 +100,20 @@ class UserScreen extends StatelessWidget {
             style: const TextStyle(fontSize: 14),
             decoration: const InputDecoration(
               border: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 13,
+              ),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: Colors.black54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.black54),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -116,10 +123,13 @@ class UserScreen extends StatelessWidget {
               }
               Navigator.pop(context);
             },
-            child: const Text('Save',
-                style: TextStyle(
-                    color: Color(0xFF00D13B),
-                    fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFF00D13B),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -143,8 +153,7 @@ class UserScreen extends StatelessWidget {
       onTap: () => _showEditNameDialog(context, auth),
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFFEEEEEE),
           borderRadius: BorderRadius.circular(12),
@@ -155,22 +164,28 @@ class UserScreen extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: const BoxDecoration(
-                  color: Colors.white, shape: BoxShape.circle),
-              child: const Icon(Icons.person,
-                  color: Colors.black38, size: 30),
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.black38, size: 30),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(auth.username,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text(
+                    auth.username,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(auth.email,
-                      style: const TextStyle(
-                          fontSize: 13, color: Colors.black54)),
+                  Text(
+                    auth.email,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
                 ],
               ),
             ),
@@ -195,23 +210,23 @@ class UserScreen extends StatelessWidget {
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-        child: const Text('Login',
-            style:
-                TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: const Text(
+          'Login',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
-  Widget _buildMenuItem(
-      {required String label, required VoidCallback onTap}) {
+  Widget _buildMenuItem({required String label, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: const Color(0xFFEEEEEE),
           borderRadius: BorderRadius.circular(10),
@@ -219,11 +234,11 @@ class UserScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.black87)),
-            const Icon(Icons.chevron_right,
-                size: 20, color: Colors.black54),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const Icon(Icons.chevron_right, size: 20, color: Colors.black54),
           ],
         ),
       ),
@@ -231,6 +246,8 @@ class UserScreen extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context, AuthProvider auth) {
+    final libraryProvider = LibraryProviderWidget.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       child: SizedBox(
@@ -241,23 +258,28 @@ class UserScreen extends StatelessWidget {
               context: context,
               builder: (_) => AlertDialog(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 title: const Text('Logout'),
-                content:
-                    const Text('Are you sure you want to logout?'),
+                content: const Text('Are you sure you want to logout?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel',
-                        style: TextStyle(color: Colors.black54)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.black54),
+                    ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      auth.logout();
+                    onPressed: () async {
                       Navigator.pop(context);
+                      await libraryProvider.clearAllOfflineData();
+                      auth.logout();
                     },
-                    child: const Text('Logout',
-                        style: TextStyle(color: Colors.red)),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               ),
@@ -269,11 +291,13 @@ class UserScreen extends StatelessWidget {
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30)),
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
-          child: const Text('Logout',
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold)),
+          child: const Text(
+            'Logout',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );
