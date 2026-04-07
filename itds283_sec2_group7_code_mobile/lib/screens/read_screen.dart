@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/library_provider.dart';
+import '../providers/auth_provider.dart'; // 🛑 เพิ่ม Import ตัวนี้เพื่อดึงข้อมูล User ปัจจุบัน
 
 class ReadScreen extends StatefulWidget {
   final int bookIndex;
@@ -38,12 +39,17 @@ class _ReadScreenState extends State<ReadScreen> {
   Future<void> _checkLocalFile() async {
     if (!mounted) return;
     final libraryProvider = LibraryProviderWidget.of(context);
+    final authProvider = AuthProviderWidget.of(
+      context,
+    ); // 🛑 ดึงข้อมูล User ปัจจุบัน
     final book = libraryProvider.items[widget.bookIndex];
-    
-    // 🛑 โหลด Bookmark เก่าที่เคยเซฟไว้ในเครื่อง
+
+    // โหลด Bookmark โดยแยกตามชื่อ User และชื่อหนังสือ
     try {
       final prefs = await SharedPreferences.getInstance();
-      final bookmarkKey = 'bookmarks_${book.bookId ?? book.title}';
+      // 🛑 ผูก username เข้ากับ Key เช่น: bookmarks_Arlif_Math101
+      final bookmarkKey =
+          'bookmarks_${authProvider.username}_${book.bookId ?? book.title}';
       final savedBookmarks = prefs.getStringList(bookmarkKey);
       if (savedBookmarks != null && mounted) {
         setState(() {
@@ -59,7 +65,7 @@ class _ReadScreenState extends State<ReadScreen> {
         final dir = await getApplicationDocumentsDirectory();
         final fileName = book.pdfUrl.split('/').last;
         final file = File('${dir.path}/$fileName');
-        
+
         if (await file.exists()) {
           if (mounted) setState(() => _localFile = file);
         }
@@ -67,17 +73,22 @@ class _ReadScreenState extends State<ReadScreen> {
         print("Error reading local file: $e");
       }
     }
-    
-    if (mounted) setState(() => _isCheckingFile = false); 
+
+    if (mounted) setState(() => _isCheckingFile = false);
   }
 
-  // 🛑 ฟังก์ชันเซฟ Bookmark ลงเครื่อง
+  // เซฟ Bookmark โดยแยกตามชื่อ User และชื่อหนังสือ
   Future<void> _saveBookmarks() async {
     final libraryProvider = LibraryProviderWidget.of(context);
+    final authProvider = AuthProviderWidget.of(
+      context,
+    ); // 🛑 ดึงข้อมูล User ปัจจุบัน
     final book = libraryProvider.items[widget.bookIndex];
     try {
       final prefs = await SharedPreferences.getInstance();
-      final bookmarkKey = 'bookmarks_${book.bookId ?? book.title}';
+      // 🛑 ผูก username เข้ากับ Key เหมือนตอนโหลด
+      final bookmarkKey =
+          'bookmarks_${authProvider.username}_${book.bookId ?? book.title}';
       final stringList = _bookmarkedPages.map((e) => e.toString()).toList();
       await prefs.setStringList(bookmarkKey, stringList);
     } catch (e) {
@@ -89,7 +100,11 @@ class _ReadScreenState extends State<ReadScreen> {
     setState(() => _showControls = !_showControls);
   }
 
-  Future<void> _handleDownload(LibraryProvider provider, bool isDownloaded, String pdfUrl) async {
+  Future<void> _handleDownload(
+    LibraryProvider provider,
+    bool isDownloaded,
+    String pdfUrl,
+  ) async {
     if (pdfUrl.isEmpty) return;
 
     final dir = await getApplicationDocumentsDirectory();
@@ -102,7 +117,10 @@ class _ReadScreenState extends State<ReadScreen> {
       setState(() => _localFile = null);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from device storage'), duration: Duration(seconds: 1)),
+          const SnackBar(
+            content: Text('Removed from device storage'),
+            duration: Duration(seconds: 1),
+          ),
         );
       }
       return;
@@ -115,12 +133,16 @@ class _ReadScreenState extends State<ReadScreen> {
       final response = await http.get(Uri.parse(pdfUrl));
       if (response.statusCode == 200) {
         await file.writeAsBytes(response.bodyBytes);
-        
+
         if (mounted) {
           provider.toggleDownload(widget.bookIndex);
           setState(() => _localFile = file);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Download complete! Saved to device.'), backgroundColor: Colors.green, duration: Duration(seconds: 2)),
+            const SnackBar(
+              content: Text('Download complete! Saved to device.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
           );
         }
       } else {
@@ -129,7 +151,10 @@ class _ReadScreenState extends State<ReadScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to download file. Please check connection.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to download file. Please check connection.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -148,29 +173,50 @@ class _ReadScreenState extends State<ReadScreen> {
     if (_isCheckingFile) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF00D13B))),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF00D13B)),
+        ),
       );
     }
 
     final libraryProvider = LibraryProviderWidget.of(context);
     final book = libraryProvider.items[widget.bookIndex];
     final bool isDownloaded = _localFile != null;
-    final bool isCurrentPageBookmarked = _bookmarkedPages.contains(_currentPage);
-    
-    // 🛑 เรียงหน้า Bookmark เพื่อให้จุดไข่ปลาบน Slider แสดงผลเรียงตามลำดับหน้า
+    final bool isCurrentPageBookmarked = _bookmarkedPages.contains(
+      _currentPage,
+    );
     final sortedBookmarks = _bookmarkedPages.toList()..sort();
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.black,
+
       drawer: Drawer(
         backgroundColor: Colors.white,
         child: SafeArea(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('Pages', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.all(20.0),
+                alignment: Alignment.centerLeft,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Remix.pages_line, color: Color(0xFF00D13B)),
+                    SizedBox(width: 10),
+                    Text(
+                      'Pages',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Expanded(
                 child: GridView.builder(
@@ -185,31 +231,76 @@ class _ReadScreenState extends State<ReadScreen> {
                   itemBuilder: (context, index) {
                     final pageNum = index + 1;
                     final isCurrent = _currentPage == pageNum;
-                    return GestureDetector(
-                      onTap: () {
-                        _pdfController.jumpToPage(pageNum);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isCurrent ? const Color(0xFF00D13B).withOpacity(0.2) : Colors.grey.shade200,
-                          border: Border.all(
-                            color: isCurrent ? const Color(0xFF00D13B) : Colors.transparent,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$pageNum',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                              color: isCurrent ? const Color(0xFF00D13B) : Colors.black87,
+                    final isBookmarked = _bookmarkedPages.contains(pageNum);
+
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: GestureDetector(
+                            onTap: () {
+                              _pdfController.jumpToPage(pageNum);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isCurrent
+                                    ? const Color(0xFF00D13B).withOpacity(0.2)
+                                    : Colors.grey.shade200,
+                                border: Border.all(
+                                  color: isCurrent
+                                      ? const Color(0xFF00D13B)
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$pageNum',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: isCurrent
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isCurrent
+                                        ? const Color(0xFF00D13B)
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              setState(() {
+                                if (isBookmarked) {
+                                  _bookmarkedPages.remove(pageNum);
+                                } else {
+                                  _bookmarkedPages.add(pageNum);
+                                }
+                              });
+                              _saveBookmarks();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(6.0),
+                              child: Icon(
+                                isBookmarked
+                                    ? Remix.bookmark_fill
+                                    : Remix.bookmark_line,
+                                color: isBookmarked
+                                    ? Colors.amber
+                                    : Colors.black26,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -218,36 +309,43 @@ class _ReadScreenState extends State<ReadScreen> {
           ),
         ),
       ),
+
       body: Stack(
         children: [
-          // PDF Viewer
           GestureDetector(
             onTap: _toggleControls,
             child: book.pdfUrl.isNotEmpty
-                ? (_localFile != null 
-                    ? SfPdfViewer.file(
-                        _localFile!,
-                        controller: _pdfController,
-                        canShowScrollHead: false,
-                        pageLayoutMode: PdfPageLayoutMode.single,
-                        scrollDirection: PdfScrollDirection.horizontal,
-                        onDocumentLoaded: (details) => setState(() => _totalPages = details.document.pages.count),
-                        onPageChanged: (details) => setState(() => _currentPage = details.newPageNumber),
-                      )
-                    : SfPdfViewer.network(
-                        book.pdfUrl,
-                        controller: _pdfController,
-                        canShowScrollHead: false,
-                        pageLayoutMode: PdfPageLayoutMode.single,
-                        scrollDirection: PdfScrollDirection.horizontal,
-                        onDocumentLoaded: (details) => setState(() => _totalPages = details.document.pages.count),
-                        onPageChanged: (details) {
-                          if (_currentPage != details.newPageNumber) {
-                            setState(() => _currentPage = details.newPageNumber);
-                          }
-                        },
-                      )
-                  )
+                ? (_localFile != null
+                      ? SfPdfViewer.file(
+                          _localFile!,
+                          controller: _pdfController,
+                          canShowScrollHead: false,
+                          pageLayoutMode: PdfPageLayoutMode.single,
+                          scrollDirection: PdfScrollDirection.horizontal,
+                          onDocumentLoaded: (details) => setState(
+                            () => _totalPages = details.document.pages.count,
+                          ),
+                          onPageChanged: (details) => setState(
+                            () => _currentPage = details.newPageNumber,
+                          ),
+                        )
+                      : SfPdfViewer.network(
+                          book.pdfUrl,
+                          controller: _pdfController,
+                          canShowScrollHead: false,
+                          pageLayoutMode: PdfPageLayoutMode.single,
+                          scrollDirection: PdfScrollDirection.horizontal,
+                          onDocumentLoaded: (details) => setState(
+                            () => _totalPages = details.document.pages.count,
+                          ),
+                          onPageChanged: (details) {
+                            if (_currentPage != details.newPageNumber) {
+                              setState(
+                                () => _currentPage = details.newPageNumber,
+                              );
+                            }
+                          },
+                        ))
                 : Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -256,7 +354,10 @@ class _ReadScreenState extends State<ReadScreen> {
                           imageUrl: book.imageUrl,
                           fit: BoxFit.contain,
                           height: 200,
-                          placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white54),
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(
+                                color: Colors.white54,
+                              ),
                           errorWidget: (context, url, error) => const Icon(
                             Icons.menu_book_rounded,
                             color: Colors.white54,
@@ -292,12 +393,19 @@ class _ReadScreenState extends State<ReadScreen> {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Remix.arrow_left_s_line, color: Colors.white, size: 28),
+                    child: const Icon(
+                      Remix.arrow_left_s_line,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                   Expanded(
                     child: Text(
                       book.title,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -312,11 +420,15 @@ class _ReadScreenState extends State<ReadScreen> {
                           _bookmarkedPages.add(_currentPage);
                         }
                       });
-                      _saveBookmarks(); // 🛑 สั่งเซฟลงเครื่องทันทีที่กดเข้า-ออก Bookmark
+                      _saveBookmarks();
                     },
                     child: Icon(
-                      isCurrentPageBookmarked ? Remix.bookmark_fill : Remix.bookmark_line,
-                      color: isCurrentPageBookmarked ? Colors.yellow : Colors.white,
+                      isCurrentPageBookmarked
+                          ? Remix.bookmark_fill
+                          : Remix.bookmark_line,
+                      color: isCurrentPageBookmarked
+                          ? Colors.yellow
+                          : Colors.white,
                       size: 24,
                     ),
                   ),
@@ -325,7 +437,6 @@ class _ReadScreenState extends State<ReadScreen> {
             ),
           ),
 
-          // Bottom bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -333,7 +444,12 @@ class _ReadScreenState extends State<ReadScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.only(top: 15, bottom: 25, left: 15, right: 15),
+              padding: const EdgeInsets.only(
+                top: 15,
+                bottom: 25,
+                left: 15,
+                right: 15,
+              ),
               color: const Color(0xFF4DB050).withOpacity(0.95),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -353,12 +469,16 @@ class _ReadScreenState extends State<ReadScreen> {
                               activeTrackColor: Colors.white,
                               inactiveTrackColor: Colors.white.withOpacity(0.4),
                               trackHeight: 2.0,
-                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 6.0,
+                              ),
                             ),
                             child: Slider(
                               value: _currentPage.toDouble(),
                               min: 1,
-                              max: _totalPages.toDouble() > 1 ? _totalPages.toDouble() : 1,
+                              max: _totalPages.toDouble() > 1
+                                  ? _totalPages.toDouble()
+                                  : 1,
                               onChanged: (value) {
                                 setState(() => _currentPage = value.toInt());
                               },
@@ -367,12 +487,15 @@ class _ReadScreenState extends State<ReadScreen> {
                               },
                             ),
                           ),
-                          // 🛑 ใช้ array ที่ถูกจัดเรียงแล้วมาโชว์จุด
                           ...sortedBookmarks.map((page) {
-                            final double percent = _totalPages > 1 ? (page - 1) / (_totalPages - 1) : 0;
-                            const double padding = 24.0; 
-                            final double availableWidth = constraints.maxWidth - (padding * 2);
-                            final double leftPosition = padding + (percent * availableWidth);
+                            final double percent = _totalPages > 1
+                                ? (page - 1) / (_totalPages - 1)
+                                : 0;
+                            const double padding = 24.0;
+                            final double availableWidth =
+                                constraints.maxWidth - (padding * 2);
+                            final double leftPosition =
+                                padding + (percent * availableWidth);
 
                             return Positioned(
                               left: leftPosition - 4,
@@ -383,7 +506,10 @@ class _ReadScreenState extends State<ReadScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.yellowAccent,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.black45, width: 1),
+                                    border: Border.all(
+                                      color: Colors.black45,
+                                      width: 1,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -397,19 +523,36 @@ class _ReadScreenState extends State<ReadScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                        icon: const Icon(Remix.menu_line, color: Colors.white, size: 24),
+                        onPressed: () =>
+                            _scaffoldKey.currentState?.openDrawer(),
+                        icon: const Icon(
+                          Remix.menu_line,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                       IconButton(
-                        onPressed: () => _handleDownload(libraryProvider, isDownloaded, book.pdfUrl),
+                        onPressed: () => _handleDownload(
+                          libraryProvider,
+                          isDownloaded,
+                          book.pdfUrl,
+                        ),
                         icon: _isDownloading
                             ? const SizedBox(
-                                width: 24, height: 24,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Icon(
-                                isDownloaded ? Remix.check_line : Remix.download_line,
-                                color: isDownloaded ? Colors.greenAccent : Colors.white,
+                                isDownloaded
+                                    ? Remix.check_line
+                                    : Remix.download_line,
+                                color: isDownloaded
+                                    ? Colors.greenAccent
+                                    : Colors.white,
                                 size: 24,
                               ),
                       ),
