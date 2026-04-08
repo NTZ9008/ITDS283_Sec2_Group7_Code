@@ -55,18 +55,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _fetchQRPayload() async {
     setState(() => _isLoadingQR = true);
     final auth = AuthProviderWidget.of(context);
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
+        {};
+    final String? promoCode = args['promoCode'];
 
     try {
+      final uri =
+          Uri.parse(
+            'https://ebookapi.arlifzs.site/api/orders/qr-payment',
+          ).replace(
+            queryParameters: (promoCode != null && promoCode.isNotEmpty)
+                ? {'promoCode': promoCode}
+                : null,
+          );
+
       final response = await http.get(
-        Uri.parse('https://ebookapi.arlifzs.site/api/orders/qr-payment'),
+        uri,
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        setState(() {
-          _qrPayload = data['qrPayload'] ?? '';
-        });
+        setState(() => _qrPayload = data['qrPayload'] ?? '');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Failed to get QR')),

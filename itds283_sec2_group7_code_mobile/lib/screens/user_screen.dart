@@ -55,7 +55,7 @@ class UserScreen extends StatelessWidget {
                       ),
                     ),
 
-                    if (auth.isLoggedIn && auth.role == 'SELLER') ...[
+                    if (auth.isLoggedIn && auth.role == 'seller') ...[
                       const SizedBox(height: 24),
                       _sectionLabel('Seller Zone'),
                       const SizedBox(height: 10),
