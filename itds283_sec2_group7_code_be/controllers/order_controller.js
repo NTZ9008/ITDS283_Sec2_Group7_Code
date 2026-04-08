@@ -44,7 +44,8 @@ const getOrderHistory = async (req, res) => {
 
 const getPaymentQR = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
+    const { promoCode } = req.query;
 
     const cart = await prisma.cart.findUnique({
       where: { userId: parseInt(userId) },
@@ -55,16 +56,29 @@ const getPaymentQR = async (req, res) => {
       return res.status(400).json({ message: "Your cart is empty" });
     }
 
-    let totalAmount = cart.items.reduce((sum, item) => sum + item.book.price, 0);
+    let subTotal = cart.items.reduce((sum, item) => sum + item.book.price, 0);
+    let discountAmount = 0;
+
+    if (promoCode) {
+      const promo = await prisma.promoCode.findUnique({ 
+        where: { code: promoCode } 
+      });
+      if (promo && promo.isActive) {
+        discountAmount = subTotal * (promo.discountPercent / 100);
+      }
+    }
+
+    const totalAmount = subTotal - discountAmount;
 
     const promptPayID = "0826313749";
-
     const payload = generatePayload(promptPayID, { amount: totalAmount });
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: "QR Payload generated successfully",
-      totalAmount: totalAmount,
-      qrPayload: payload 
+      subTotal,
+      discountAmount,
+      totalAmount,
+      qrPayload: payload
     });
 
   } catch (error) {
